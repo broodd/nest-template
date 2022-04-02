@@ -1,0 +1,48 @@
+version: '3.5'
+services:
+  postgres:
+    image: postgres:13-alpine
+    ports:
+      - '5432:5432'
+    networks:
+      - network
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - '6379:6379'
+    networks:
+      - network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  redis-commander:
+    image: 'rediscommander/redis-commander:latest'
+    environment:
+      REDIS_HOSTS: redis
+    ports:
+      - '8081:8081'
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  gateway_data:
+  postgres_data:
