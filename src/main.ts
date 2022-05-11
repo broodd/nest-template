@@ -1,6 +1,8 @@
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { initializeApp } from 'firebase-admin/app';
 import { ValidationPipe } from '@nestjs/common';
+import { credential } from 'firebase-admin';
 import { NestFactory } from '@nestjs/core';
 
 import multipart from 'fastify-multipart';
@@ -39,6 +41,14 @@ async function bootstrap() {
   app.setGlobalPrefix(configService.get('PREFIX')).enableCors({
     credentials: configService.get('CORS_CREDENTIALS'),
     origin: configService.get('CORS_ORIGIN'),
+  });
+
+  initializeApp({
+    credential: credential.cert({
+      clientEmail: configService.get('FIREBASE_CLIENT_EMAIL'),
+      projectId: configService.get('FIREBASE_PROJECT_ID'),
+      privateKey: configService.get<string>('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n'),
+    }),
   });
 
   if (configService.getMode(ConfigMode.production)) app.enableShutdownHooks();

@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from './config';
 import { MultipartModule } from './multipart';
 import { DatabaseModule } from './database';
 
+import { NotificationsModule } from './modules/notifications';
 import { UsersModule } from './modules/users';
 import { FilesModule } from './modules/files';
 import { AuthModule } from './modules/auth';
@@ -45,6 +46,7 @@ import { AppController } from './app.controller';
     AuthModule,
     UsersModule,
     FilesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

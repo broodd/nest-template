@@ -1,18 +1,18 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import {
-  Entity,
   Column,
+  Entity,
   ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
-import { UserEntity } from './user.entity';
-import { Exclude } from 'class-transformer';
+import { UserEntity } from 'src/modules/users/entities';
 
-@Entity('user_refresh_tokens')
-export class UserRefreshTokenEntity {
+@Entity('user_notification_tokens')
+export class UserNotificationTokenEntity {
   /**
    * [description]
    */
@@ -23,17 +23,18 @@ export class UserRefreshTokenEntity {
   /**
    * [description]
    */
-  @Exclude()
-  @ApiHideProperty()
-  @Column({ type: 'varchar', length: 64 })
-  public ppid: string;
+  @ApiProperty({ maxLength: 256 })
+  @Column({ type: 'varchar', length: 256, nullable: false, unique: true })
+  public readonly token: string;
 
   /**
    * [description]
    */
+  @JoinColumn()
   @ApiHideProperty()
-  @ManyToOne(() => UserEntity, ({ refreshTokens }) => refreshTokens, {
+  @ManyToOne(() => UserEntity, ({ notificationTokens }) => notificationTokens, {
     onDelete: 'CASCADE',
+    nullable: false,
   })
   public readonly owner: Partial<UserEntity>;
 

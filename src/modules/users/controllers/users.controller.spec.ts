@@ -1,17 +1,17 @@
 import { classToClassFromExist } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { UserEntity } from './entities';
+import { UserEntity } from '../entities';
 import {
   PaginationUsersDto,
   SelectUsersDto,
   SelectUserDto,
   CreateUserDto,
   UpdateUserDto,
-} from './dto';
+} from '../dto';
 
 import { UsersController } from './users.controller';
-import { UsersService } from './services';
+import { UsersService } from '../services';
 
 describe('UsersController', () => {
   const optionsAll = new SelectUsersDto();

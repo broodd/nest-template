@@ -16,18 +16,18 @@ import {
 import { UseRole } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
 
-import { JwtAuthGuard } from '../auth/guards';
+import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { UsersService } from './services';
-import { UserEntity } from './entities';
-import { UserRoleEnum } from './enums';
+import { UsersService } from '../services';
+import { UserEntity } from '../entities';
+import { UserRoleEnum } from '../enums';
 import {
   PaginationUsersDto,
   SelectUsersDto,
   CreateUserDto,
   SelectUserDto,
   UpdateUserDto,
-} from './dto';
+} from '../dto';
 
 /**
  * [description]
@@ -40,9 +40,9 @@ import {
 export class UsersController {
   /**
    * [description]
-   * @param userService
+   * @param usersService
    */
-  constructor(private readonly userService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {}
 
   /**
    * [description]
@@ -51,7 +51,7 @@ export class UsersController {
   @Post()
   @UseRole(UserRoleEnum.ADMIN)
   public async createOne(@Body() data: CreateUserDto): Promise<UserEntity> {
-    return this.userService.createOne(data);
+    return this.usersService.createOne(data);
   }
 
   /**
@@ -61,7 +61,7 @@ export class UsersController {
   @Get()
   @UseRole(UserRoleEnum.ADMIN)
   public async selectAll(@Query() options: SelectUsersDto): Promise<PaginationUsersDto> {
-    return this.userService.selectAll(options);
+    return this.usersService.selectAll(options);
   }
 
   /**
@@ -74,7 +74,7 @@ export class UsersController {
     @Param() conditions: ID,
     @Query() options: SelectUserDto,
   ): Promise<UserEntity> {
-    return this.userService.selectOne(conditions, options);
+    return this.usersService.selectOne(conditions, options);
   }
 
   /**
@@ -88,7 +88,7 @@ export class UsersController {
     @Param() conditions: ID,
     @Body() data: UpdateUserDto,
   ): Promise<UserEntity> {
-    return this.userService.updateOne(conditions, data);
+    return this.usersService.updateOne(conditions, data);
   }
 
   /**
@@ -98,6 +98,6 @@ export class UsersController {
   @Delete(':id')
   @UseRole(UserRoleEnum.ADMIN)
   public async deleteOne(@Param() conditions: ID): Promise<UserEntity> {
-    return this.userService.deleteOne(conditions);
+    return this.usersService.deleteOne(conditions);
   }
 }

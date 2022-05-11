@@ -77,7 +77,7 @@ export class AuthController {
   @ApiBody({ type: JwtRefreshTokenDto })
   public async logOut(@User() user: UserEntity): Promise<void> {
     const [refreshToken] = user.refreshTokens;
-    await this.userRefreshTokensService.deleteOne({ id: refreshToken.id, user: { id: user.id } });
+    await this.userRefreshTokensService.deleteOne({ id: refreshToken.id, owner: { id: user.id } });
   }
 
   /**
@@ -91,7 +91,7 @@ export class AuthController {
     const [oldRefreshToken] = user.refreshTokens;
     const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
       id: oldRefreshToken.id,
-      user: { id: user.id },
+      owner: { id: user.id },
     });
     return this.authService.generateTokens(user, refreshToken);
   }

@@ -6,6 +6,7 @@ import { hash } from 'bcrypt';
 import {
   Repository,
   SaveOptions,
+  RemoveOptions,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -100,8 +101,7 @@ export class UserRefreshTokensService {
     conditions: FindOptionsWhere<UserRefreshTokenEntity>,
     options: FindOneOptions<UserRefreshTokenEntity> = { loadEagerRelations: false },
   ): Promise<UserRefreshTokenEntity> {
-    return this.find(instanceToPlain(options))
-      .where(conditions)
+    return this.find({ ...instanceToPlain(options), where: conditions })
       .getOneOrFail()
       .catch(() => {
         throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
@@ -135,20 +135,13 @@ export class UserRefreshTokensService {
    */
   public async deleteOne(
     conditions: FindOptionsWhere<UserRefreshTokenEntity>,
+    options: RemoveOptions = { transaction: false },
   ): Promise<UserRefreshTokenEntity> {
-    return this.userRefreshTokenEntityRepository.manager.transaction(
-      async (transactionalEntityManager) => {
-        const entity = await this.selectOne(conditions);
-        await transactionalEntityManager
-          .delete(UserRefreshTokenEntity, conditions)
-          .then(({ affected }) => {
-            if (!affected) throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
-          })
-          .catch(() => {
-            throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
-          });
-        return entity;
-      },
-    );
+    return this.userRefreshTokenEntityRepository.manager.transaction(async () => {
+      const entity = await this.selectOne(conditions, options);
+      return this.userRefreshTokenEntityRepository.remove(entity).catch(() => {
+        throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
+      });
+    });
   }
 }

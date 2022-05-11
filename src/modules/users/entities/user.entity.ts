@@ -1,7 +1,7 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import * as bcrypt from 'bcrypt';
-import { Transform } from 'class-transformer';
 import { FileEntity, FileEntityPreview } from 'src/modules/files/entities';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { hash } from 'bcrypt';
 import {
   Column,
   Entity,
@@ -16,8 +16,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { UserRoleEnum, UserStatusEnum } from '../enums';
+import { UserNotificationTokenEntity } from './user-notification-token.entity';
 import { UserRefreshTokenEntity } from './user-refresh-token.entity';
+import { UserRoleEnum, UserStatusEnum } from '../enums';
 
 /**
  * [description]
@@ -66,7 +67,7 @@ export class UserEntity {
   @BeforeUpdate()
   public async hashPassword(): Promise<void> {
     if (!this.password) return;
-    this.password = await bcrypt.hash(this.password, 8);
+    this.password = await hash(this.password, 8);
   }
 
   /**
@@ -87,10 +88,15 @@ export class UserEntity {
    * [description]
    */
   @ApiHideProperty()
-  @OneToMany(() => UserRefreshTokenEntity, ({ user }) => user, {
-    nullable: true,
-  })
+  @OneToMany(() => UserRefreshTokenEntity, ({ owner }) => owner)
   public readonly refreshTokens: UserRefreshTokenEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiHideProperty()
+  @OneToMany(() => UserNotificationTokenEntity, ({ owner }) => owner)
+  public readonly notificationTokens: UserNotificationTokenEntity[];
 
   /**
    * [description]

@@ -120,7 +120,9 @@ export class AuthService {
     const user = await this.validateUser({ email });
     if (!(await this.validatePassword(password, user.password)))
       throw new BadRequestException(ErrorTypeEnum.AUTH_INCORRECT_CREDENTIALS);
-    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({ user });
+    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
+      owner: { id: user.id },
+    });
     return this.generateTokens(user, refreshToken);
   }
 
@@ -130,7 +132,9 @@ export class AuthService {
    */
   public async createUser(data: CreateProfileDto): Promise<JwtTokensDto> {
     const user = await this.usersService.createOne(data);
-    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({ user });
+    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
+      owner: { id: user.id },
+    });
     return this.generateTokens(user, refreshToken);
   }
 

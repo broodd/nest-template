@@ -1,11 +1,11 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
 import { MaxLength, MinLength } from 'class-validator';
 import { UpdateUserDto } from '../../users/dto';
 
 /**
  * [description]
  */
-export class UpdateProfileDto extends UpdateUserDto {}
+export class UpdateProfileDto extends OmitType(UpdateUserDto, ['password', 'email']) {}
 
 /**
  * [description]

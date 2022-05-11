@@ -4,6 +4,7 @@ import { instanceToPlain } from 'class-transformer';
 import {
   Repository,
   SaveOptions,
+  RemoveOptions,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -89,8 +90,7 @@ export class UsersService {
   public async selectAll(
     options: FindManyOptions<UserEntity> = { loadEagerRelations: false },
   ): Promise<PaginationUsersDto> {
-    const qb = this.find(options);
-    return qb
+    return this.find(options)
       .getManyAndCount()
       .then((data) => new PaginationUsersDto(data))
       .catch(() => {
@@ -144,18 +144,15 @@ export class UsersService {
    * @param conditions
    * @param options
    */
-  public async deleteOne(conditions: FindOptionsWhere<UserEntity>): Promise<UserEntity> {
-    return this.userEntityRepository.manager.transaction(async (transactionalEntityManager) => {
+  public async deleteOne(
+    conditions: FindOptionsWhere<UserEntity>,
+    options: RemoveOptions = { transaction: false },
+  ): Promise<UserEntity> {
+    return this.userEntityRepository.manager.transaction(async () => {
       const entity = await this.selectOne(conditions);
-      await transactionalEntityManager
-        .delete(UserEntity, conditions)
-        .then(({ affected }) => {
-          if (!affected) throw new NotFoundException(ErrorTypeEnum.USER_NOT_FOUND);
-        })
-        .catch(() => {
-          throw new NotFoundException(ErrorTypeEnum.USER_NOT_FOUND);
-        });
-      return entity;
+      return this.userEntityRepository.remove(entity, options).catch(() => {
+        throw new NotFoundException(ErrorTypeEnum.USER_NOT_FOUND);
+      });
     });
   }
 }

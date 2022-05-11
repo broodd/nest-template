@@ -1,5 +1,8 @@
-import { IsEmail, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, MaxLength, MinLength, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+import { ID } from 'src/common/dto';
 
 /**
  * [description]
@@ -19,4 +22,13 @@ export class CreateUserDto {
   @MaxLength(64)
   @ApiProperty({ minLength: 8, maxLength: 64, example: 'password' })
   public readonly password: string;
+
+  /**
+   * [description]
+   */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ID)
+  @ApiProperty({ type: () => ID })
+  public readonly cover?: ID;
 }

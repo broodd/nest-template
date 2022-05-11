@@ -53,12 +53,13 @@ export class StorageService implements OnModuleInit {
   /**
    * [description]
    */
-  public generateName(): string {
+  public generateName(): { prefix: string; filename: string } {
     const filename = randomBytes(16).toString('hex');
     const now = new Date();
     const year = now.getFullYear();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    return `${year}/${month}/${filename}`;
+    const prefix = `${year}/${month}`;
+    return { prefix, filename: `${prefix}/${filename}` };
   }
 
   /**
@@ -67,11 +68,12 @@ export class StorageService implements OnModuleInit {
    */
   public async createOne(multipart: Multipart): Promise<UploadedFile> {
     const { file, encoding, mimetype } = multipart;
-    const filename = this.generateName();
+    const { prefix, filename } = this.generateName();
     const filePath = join(this.destination, filename);
     const ext = extname(multipart.filename);
 
     try {
+      await mkdir(join(this.destination, prefix), { recursive: true });
       await pipeline(file, createWriteStream(filePath, this.options));
       const { size } = await stat(filePath);
       return new UploadedFile({

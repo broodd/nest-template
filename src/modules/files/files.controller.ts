@@ -4,6 +4,7 @@ import { FastifyReply } from 'fastify';
 import {
   Res,
   Get,
+  Post,
   Patch,
   Param,
   Query,
@@ -12,7 +13,6 @@ import {
   Controller,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Post,
 } from '@nestjs/common';
 
 import { User, UseRole } from 'src/common/decorators';

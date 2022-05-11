@@ -1,15 +1,15 @@
 import { ApiHideProperty, ApiProperty, PickType } from '@nestjs/swagger';
 import { Multipart } from 'fastify-multipart';
 import { Expose } from 'class-transformer';
+import { join } from 'node:path';
 import {
   Column,
   Entity,
   ManyToOne,
-  BaseEntity,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  JoinColumn,
 } from 'typeorm';
 
 import { UserEntity } from 'src/modules/users/entities';
@@ -18,7 +18,7 @@ import { UserEntity } from 'src/modules/users/entities';
  * [description]
  */
 @Entity('files')
-export class FileEntity extends BaseEntity implements Partial<Multipart> {
+export class FileEntity implements Partial<Multipart> {
   /**
    * [description]
    */
@@ -35,7 +35,7 @@ export class FileEntity extends BaseEntity implements Partial<Multipart> {
   @ApiProperty({ readOnly: true })
   get src(): string {
     if (!this.fileSize) return null;
-    const url = new URL(this.title, process.env.CDN);
+    const url = new URL(join(process.env.CDN, this.title));
     url.searchParams.set('id', this.id);
     return url.toString();
   }
