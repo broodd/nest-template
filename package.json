@@ -1,6 +1,6 @@
 {
   "name": "nest-template",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Nest.js is based on Fastify and TypeORM setup",
   "author": {
     "name": "broodd",
