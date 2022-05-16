@@ -1,7 +1,7 @@
 import { FileEntity, FileEntityPreview } from 'src/modules/files/entities';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { hash } from 'bcrypt';
+import { hash } from 'src/common/helpers';
 import {
   Column,
   Entity,
@@ -57,7 +57,7 @@ export class UserEntity {
    * [description]
    */
   @ApiHideProperty()
-  @Column({ type: 'varchar', length: 64, select: false })
+  @Column({ type: 'varchar', length: 149, select: false })
   public password: string;
 
   /**
@@ -67,7 +67,7 @@ export class UserEntity {
   @BeforeUpdate()
   public async hashPassword(): Promise<void> {
     if (!this.password) return;
-    this.password = await hash(this.password, 8);
+    this.password = await hash(this.password);
   }
 
   /**

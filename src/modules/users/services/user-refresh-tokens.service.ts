@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
 import { randomBytes } from 'crypto';
-import { hash } from 'bcrypt';
+import { hash } from 'src/common/helpers';
 import {
   Repository,
   SaveOptions,
@@ -42,7 +42,7 @@ export class UserRefreshTokensService {
     options: SaveOptions = { transaction: false },
   ): Promise<UserRefreshTokenEntity> {
     const refreshIdentifier = randomBytes(16).toString('hex');
-    const refreshHash = await hash(refreshIdentifier, 8);
+    const refreshHash = await hash(refreshIdentifier);
     const entity = await this.createOne({ ...entityLike, ppid: refreshHash }, options);
     return { ...entity, ppid: refreshIdentifier };
   }

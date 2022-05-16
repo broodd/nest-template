@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { compare } from 'bcrypt';
+import { compare } from 'src/common/helpers';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { ConfigService } from 'src/config';

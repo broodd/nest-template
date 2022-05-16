@@ -25,7 +25,7 @@ export class UserRefreshTokenEntity {
    */
   @Exclude()
   @ApiHideProperty()
-  @Column({ type: 'varchar', length: 64 })
+  @Column({ type: 'varchar', length: 149 })
   public ppid: string;
 
   /**

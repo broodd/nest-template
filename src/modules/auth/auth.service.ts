@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Cache } from 'cache-manager';
 
 import { randomBytes } from 'crypto';
-import { compare } from 'bcrypt';
+import { compare } from 'src/common/helpers';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { SendGridService } from 'src/sendgrid';
