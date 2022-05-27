@@ -1,3 +1,7 @@
+## [0.1.1](https://github.com/broodd/nest-template/compare/v0.1.0...v0.1.1) (2022-05-27)
+
+
+
 # [0.1.0](https://github.com/broodd/nest-template/compare/v0.0.1...v0.1.0) (2022-05-11)
 
 
