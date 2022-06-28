@@ -3,19 +3,19 @@ export function createRepMock(code?: number, mimetype?: string, headers?: any): 
     request: {
       headers: {},
     },
-    headers: function (data: any) {
+    headers(data: any) {
       if (headers) expect(data).toEqual(headers);
       return this;
     },
-    status: function (data: number) {
+    status(data: number) {
       if (code) expect(data).toEqual(code);
       return this;
     },
-    type: function (data: string) {
+    type(data: string) {
       if (mimetype) expect(data).toEqual(mimetype);
       return this;
     },
-    send: async function () {
+    async send() {
       return this;
     },
   };

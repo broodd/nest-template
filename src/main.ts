@@ -1,7 +1,6 @@
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { initializeApp } from 'firebase-admin/app';
-import { ValidationPipe } from '@nestjs/common';
 import { credential } from 'firebase-admin';
 import { NestFactory } from '@nestjs/core';
 
@@ -13,6 +12,7 @@ import { HttpExceptionFilter } from './common/filters';
 import { ConfigMode, ConfigService } from './config';
 
 import { AppModule } from './app.module';
+import { validationPipe } from './common/pipes';
 
 /**
  * [description]
@@ -22,15 +22,6 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   const exceptionFilter = new HttpExceptionFilter();
-  const validationPipe = new ValidationPipe({
-    forbidNonWhitelisted: true,
-    forbidUnknownValues: true,
-    whitelist: true,
-    transform: true,
-    transformOptions: {
-      enableImplicitConversion: true,
-    },
-  });
 
   await app.register(compress, { encodings: ['gzip', 'deflate'] });
   await app.register(multipart);

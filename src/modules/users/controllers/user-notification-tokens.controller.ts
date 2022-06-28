@@ -21,8 +21,8 @@ import { JwtAuthGuard } from 'src/modules/auth/guards';
 import { UserNotificationTokensService } from '../services';
 import { UserEntity, UserNotificationTokenEntity } from '../entities';
 import {
-  SelectUsersDto,
-  PaginationUsersDto,
+  PaginationUserNotificationTokensDto,
+  SelectUserNotificationTokensDto,
   CreateUserNotificationTokenDto,
   SelectUserNotificationTokenDto,
   UpdateUserNotificationTokenDto,
@@ -61,7 +61,9 @@ export class UserNotificationTokensController {
    * @param options
    */
   @Get()
-  public async selectAll(@Query() options: SelectUsersDto): Promise<PaginationUsersDto> {
+  public async selectAll(
+    @Query() options: SelectUserNotificationTokensDto,
+  ): Promise<PaginationUserNotificationTokensDto> {
     return this.userNotificationTokensService.selectAll(options);
   }
 

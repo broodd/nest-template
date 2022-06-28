@@ -9,6 +9,8 @@ import { MultipartModule } from './multipart';
 import { DatabaseModule } from './database';
 
 import { NotificationsModule } from './modules/notifications';
+import { SocketsModule } from './modules/sockets';
+import { ChatsModule } from './modules/chats';
 import { UsersModule } from './modules/users';
 import { FilesModule } from './modules/files';
 import { AuthModule } from './modules/auth';
@@ -46,6 +48,8 @@ import { AppController } from './app.controller';
     AuthModule,
     UsersModule,
     FilesModule,
+    SocketsModule,
+    ChatsModule,
     NotificationsModule,
   ],
   controllers: [AppController],
