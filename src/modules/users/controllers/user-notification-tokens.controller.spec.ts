@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 
 import { UserEntity, UserNotificationTokenEntity } from '../entities';
 import {
@@ -30,13 +30,13 @@ describe('UserNotificationTokensController', () => {
           provide: UserNotificationTokensService,
           useValue: {
             createOne: (data: Partial<UserNotificationTokenEntity>) =>
-              plainToClass(UserNotificationTokenEntity, { ...owner, ...data }),
+              plainToInstance(UserNotificationTokenEntity, { ...owner, ...data }),
             selectAll: () => new PaginationUsersDto([[owner], 1]),
             selectOne: () => new UserNotificationTokenEntity(),
             updateOne: (
               owner: UserNotificationTokenEntity,
               data: Partial<UserNotificationTokenEntity>,
-            ) => plainToClass(UserNotificationTokenEntity, { ...owner, ...data }),
+            ) => plainToInstance(UserNotificationTokenEntity, { ...owner, ...data }),
             deleteOne: () => new UserNotificationTokenEntity(),
           },
         },

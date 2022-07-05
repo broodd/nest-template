@@ -1,4 +1,4 @@
-import { classToClassFromExist } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { UserEntity } from '../entities';
@@ -29,11 +29,12 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: {
-            createOne: (data: Partial<UserEntity>) => classToClassFromExist(data, owner),
+            createOne: (data: Partial<UserEntity>) =>
+              plainToInstance(UserEntity, { ...owner, ...data }),
             selectAll: () => new PaginationUsersDto([[owner], 1]),
             selectOne: () => new UserEntity(),
             updateOne: (owner: UserEntity, data: Partial<UserEntity>) =>
-              classToClassFromExist(data, owner),
+              plainToInstance(UserEntity, { ...owner, ...data }),
             deleteOne: () => new UserEntity(),
           },
         },

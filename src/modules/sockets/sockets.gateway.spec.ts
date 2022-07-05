@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
 
@@ -20,13 +20,13 @@ describe('SocketsGateway', () => {
         {
           provide: JwtService,
           useValue: {
-            verify: () => plainToClass(UserEntity, { id: 'id', ppid: 'ppid' }),
+            verify: () => plainToInstance(UserEntity, { id: 'id', ppid: 'ppid' }),
           },
         },
         {
           provide: UsersService,
           useValue: {
-            selectOne: () => plainToClass(UserEntity, { id: 'id', ppid: 'ppid' }),
+            selectOne: () => plainToInstance(UserEntity, { id: 'id', ppid: 'ppid' }),
           },
         },
         {

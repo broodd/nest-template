@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { plainToClassFromExist } from 'class-transformer';
+import { plainToInstanceFromExist } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Multipart } from 'fastify-multipart';
@@ -81,21 +81,21 @@ describe('FilesService', () => {
     });
 
     it('should be return files pagination entity by title filtering', async () => {
-      const options = plainToClassFromExist(new SelectFilesDto(), { title: '  ' });
+      const options = plainToInstanceFromExist(new SelectFilesDto(), { title: '  ' });
       const received = await service.selectAll(options);
       expect(received).toBeInstanceOf(PaginationFilesDto);
       expect(received.total).toEqual(0);
     });
 
     it('should be return not found exception', async () => {
-      const options = plainToClassFromExist(new SelectFilesDto(), { page: -1 });
+      const options = plainToInstanceFromExist(new SelectFilesDto(), { page: -1 });
       const error = new NotFoundException(ErrorTypeEnum.FILES_NOT_FOUND);
       return expect(service.selectAll(options)).rejects.toThrow(error);
     });
   });
 
   describe('selectOne', () => {
-    const options = plainToClassFromExist(new SelectFileDto(), {});
+    const options = plainToInstanceFromExist(new SelectFileDto(), {});
 
     it('should be return file entity', async () => {
       const received = await service.selectOne({ id: expected.id }, options);
@@ -110,7 +110,7 @@ describe('FilesService', () => {
   });
 
   describe('downloadOne', () => {
-    const options = plainToClassFromExist(new DownloadFileDto(), {});
+    const options = plainToInstanceFromExist(new DownloadFileDto(), {});
     const rep = utils.createRepMock(200, expected.mimetype);
 
     it('should be return file stream', async () => {

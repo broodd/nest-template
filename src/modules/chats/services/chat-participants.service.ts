@@ -1,6 +1,6 @@
 import { NotFoundException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 import {
   SelectQueryBuilder,
   FindOptionsUtils,
@@ -90,7 +90,7 @@ export class ChatParticipantsService {
       select: ['userId'],
     },
   ): Promise<string[]> {
-    return this.find(classToPlain(options))
+    return this.find(instanceToPlain(options))
       .getMany()
       .then((data) => data.map((value) => value.userId))
       .catch(() => {
@@ -105,7 +105,7 @@ export class ChatParticipantsService {
   public async selectAll(
     options: FindManyOptions<ChatParticipantEntity> = { loadEagerRelations: false },
   ): Promise<PaginationChatsDto> {
-    return this.find(classToPlain(options))
+    return this.find(instanceToPlain(options))
       .getManyAndCount()
       .then((data) => new PaginationChatParticipantsDto(data))
       .catch(() => {
@@ -122,7 +122,7 @@ export class ChatParticipantsService {
     conditions: FindOptionsWhere<ChatParticipantEntity>,
     options: FindOneOptions<ChatParticipantEntity> = { loadEagerRelations: false },
   ): Promise<ChatParticipantEntity> {
-    return this.find({ ...classToPlain(options), where: conditions })
+    return this.find({ ...instanceToPlain(options), where: conditions })
       .getOneOrFail()
       .catch(() => {
         throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANT_NOT_FOUND);

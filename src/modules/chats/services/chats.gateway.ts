@@ -80,15 +80,13 @@ export class ChatsGateway {
     const chat = await this.chatsService.selectOneEager(entityLike.chat, user);
 
     const socketsIds = this.socketsService.selectAllIds(participantsIds);
-    this.server
-      .to(socketsIds)
-      .emit(
-        ChatSocketEventsEnum.CHAT_RECEIVE_MESSAGE,
-        new ChatReceiveMessageDto({
-          chat: instanceToPlain(chat),
-          message: instanceToPlain(message),
-        }),
-      );
+    this.server.to(socketsIds).emit(
+      ChatSocketEventsEnum.CHAT_RECEIVE_MESSAGE,
+      new ChatReceiveMessageDto({
+        chat: instanceToPlain(chat),
+        message: instanceToPlain(message),
+      }),
+    );
   }
 
   /**

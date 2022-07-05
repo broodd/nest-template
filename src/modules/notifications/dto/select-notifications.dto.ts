@@ -14,7 +14,7 @@ export class SelectNotificationsDto extends FindManyOptionsDto<NotificationEntit
   public readonly status?: NotificationsStatusEnum;
 
   public get where(): Brackets {
-    const { status, ...other } = this;
+    const { status } = this;
 
     return new Brackets((qb) => {
       qb.where(Object.assign({}, status && { status }));

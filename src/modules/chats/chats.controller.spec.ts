@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 
 import { UserEntity } from '../users/entities';
 
@@ -14,7 +14,7 @@ describe('ChatsController', () => {
   } as UserEntity;
 
   const optionsAll = new SelectChatsDto();
-  const createOne = plainToClass(CreateChatDto, { participant: new UserEntity() });
+  const createOne = plainToInstance(CreateChatDto, { participant: new UserEntity() });
 
   const chat = new ChatEntity();
   const chatMessage = new ChatMessageEntity();
@@ -29,12 +29,12 @@ describe('ChatsController', () => {
           provide: ChatsService,
           useValue: {
             createOne: (data: Partial<ChatEntity>) =>
-              plainToClass(ChatEntity, { ...data, ...chat }),
+              plainToInstance(ChatEntity, { ...data, ...chat }),
             selectAll: () => [[chat], 1],
             selectOne: () => new ChatEntity(),
             selectOneByParticipants: () => new ChatEntity(),
             updateOne: (chat: ChatEntity, data: Partial<ChatEntity>) =>
-              plainToClass(ChatEntity, { ...chat, ...data }),
+              plainToInstance(ChatEntity, { ...chat, ...data }),
             deleteOne: () => new ChatEntity(),
           },
         },
@@ -42,11 +42,11 @@ describe('ChatsController', () => {
           provide: ChatMessagesService,
           useValue: {
             createOne: (data: Partial<ChatMessageEntity>) =>
-              plainToClass(ChatMessageEntity, { ...data, ...chatMessage }),
+              plainToInstance(ChatMessageEntity, { ...data, ...chatMessage }),
             selectAll: () => [[chatMessage], 1],
             selectOne: () => new ChatMessageEntity(),
             updateOne: (chatMessage: ChatMessageEntity, data: Partial<ChatMessageEntity>) =>
-              plainToClass(ChatMessageEntity, { ...chatMessage, ...data }),
+              plainToInstance(ChatMessageEntity, { ...chatMessage, ...data }),
             deleteOne: () => new ChatMessageEntity(),
           },
         },

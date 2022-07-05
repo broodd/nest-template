@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -59,7 +59,7 @@ describe('ChatsService', () => {
     });
 
     it('should be return not found exception', async () => {
-      const options = plainToClass(SelectChatsDto, { page: -1 });
+      const options = plainToInstance(SelectChatsDto, { page: -1 });
       const error = new NotFoundException(ErrorTypeEnum.CHATS_NOT_FOUND);
       return service.selectAll(options, user).catch((err) => {
         expect(err).toBeInstanceOf(NotFoundException);

@@ -1,6 +1,6 @@
 import { NotFoundException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 import {
   SelectQueryBuilder,
   FindOptionsWhere,
@@ -146,7 +146,7 @@ export class ChatsService {
     user: Partial<UserEntity>,
   ): Promise<PaginationChatsDto> {
     const { activeChatId } = options;
-    const qb = this.find(classToPlain(options));
+    const qb = this.find(instanceToPlain(options));
 
     /**
      * Join last message
@@ -204,7 +204,7 @@ export class ChatsService {
     conditions: FindOptionsWhere<ChatEntity>,
     options: FindOneOptions<ChatEntity> = { loadEagerRelations: false },
   ): Promise<ChatEntity> {
-    return this.find({ ...classToPlain(options), where: conditions })
+    return this.find({ ...instanceToPlain(options), where: conditions })
       .getOneOrFail()
       .catch(() => {
         throw new NotFoundException(ErrorTypeEnum.CHAT_NOT_FOUND);
@@ -223,7 +223,7 @@ export class ChatsService {
     options: FindOneOptions<ChatEntity> = { loadEagerRelations: true },
   ): Promise<ChatEntity> {
     return (
-      this.find({ ...classToPlain(options), where: conditions })
+      this.find({ ...instanceToPlain(options), where: conditions })
         /**
          * Join last message
          */
