@@ -1,22 +1,21 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { plainToInstanceFromExist } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Multipart } from 'fastify-multipart';
-import { FastifyReply } from 'fastify';
-
-import * as utils from 'test/utils';
-import * as path from 'path';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { StorageService } from 'src/multipart';
 import { DatabaseModule } from 'src/database';
 import { ConfigModule } from 'src/config';
 
-import { PaginationFilesDto, SelectFilesDto, SelectFileDto, DownloadFileDto } from './dto';
-import { FileEntity } from './entities';
+import { UserRoleEnum } from '../users/enums';
+import { UserEntity } from '../users/entities';
 
+import { PaginationFilesDto, SelectFilesDto, SelectFileDto } from './dto';
 import { FilesService } from './files.service';
+import { FileEntity } from './entities';
+import { join } from 'path';
 
 describe('FilesService', () => {
   const expected = {
@@ -30,6 +29,9 @@ describe('FilesService', () => {
     createdAt: new Date('2021-01-15T05:43:30.034Z'),
     updatedAt: new Date('2021-01-15T05:43:30.034Z'),
   } as FileEntity;
+  const owner = {
+    role: UserRoleEnum.ADMIN,
+  } as UserEntity;
 
   let service: FilesService;
 
@@ -41,8 +43,8 @@ describe('FilesService', () => {
         {
           provide: StorageService,
           useValue: {
-            createOne: (rep: FastifyReply): FastifyReply => rep,
-            selectOne: (rep: FastifyReply): FastifyReply => rep,
+            createOne: (multipart: Multipart): Multipart => multipart,
+            selectOne: (multipart: Multipart): Multipart => multipart,
             deleteOne: () => undefined,
           },
         },
@@ -58,18 +60,22 @@ describe('FilesService', () => {
 
   describe('createOne', () => {
     it('should be return file entity', async () => {
-      const received = await service.createOne(expected as unknown as Multipart);
-      const url = new URL(expected.title, process.env.CDN);
+      const received = await service.createOne(expected as unknown as Multipart, owner);
+      /**
+       * @xample for S3
+       * const url = new URL(expected.filename + expected.extname, process.env.CDN);
+       */
+
+      const url = new URL(join(process.env.CDN, expected.title));
       url.searchParams.set('id', expected.id);
       expect(received).toBeInstanceOf(FileEntity);
       expect(received.src).toEqual(url.toString());
-      expect(received).toEqual(expected);
     });
 
     it('should be return conflict exception', async () => {
       const error = new ConflictException(ErrorTypeEnum.FILE_ALREADY_EXIST);
       const data = { ...expected, id: '' } as unknown as Multipart;
-      return expect(service.createOne(data)).rejects.toThrow(error);
+      return expect(service.createOne(data, owner)).rejects.toThrow(error);
     });
   });
 
@@ -81,21 +87,21 @@ describe('FilesService', () => {
     });
 
     it('should be return files pagination entity by title filtering', async () => {
-      const options = plainToInstanceFromExist(new SelectFilesDto(), { title: '  ' });
+      const options = plainToInstance(SelectFilesDto, { title: '  ' });
       const received = await service.selectAll(options);
       expect(received).toBeInstanceOf(PaginationFilesDto);
       expect(received.total).toEqual(0);
     });
 
     it('should be return not found exception', async () => {
-      const options = plainToInstanceFromExist(new SelectFilesDto(), { page: -1 });
+      const options = plainToInstance(SelectFilesDto, { page: -1 });
       const error = new NotFoundException(ErrorTypeEnum.FILES_NOT_FOUND);
       return expect(service.selectAll(options)).rejects.toThrow(error);
     });
   });
 
   describe('selectOne', () => {
-    const options = plainToInstanceFromExist(new SelectFileDto(), {});
+    const options = plainToInstance(SelectFileDto, {});
 
     it('should be return file entity', async () => {
       const received = await service.selectOne({ id: expected.id }, options);
@@ -106,41 +112,6 @@ describe('FilesService', () => {
     it('should be return not found exception', async () => {
       const error = new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
       return expect(service.selectOne({ id: '' }, options)).rejects.toThrow(error);
-    });
-  });
-
-  describe('downloadOne', () => {
-    const options = plainToInstanceFromExist(new DownloadFileDto(), {});
-    const rep = utils.createRepMock(200, expected.mimetype);
-
-    it('should be return file stream', async () => {
-      const received = await service.downloadOne(rep, { id: expected.id }, options);
-      expect(received).toEqual(rep);
-    });
-
-    it('should be return not found exception', async () => {
-      const error = new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
-      return expect(service.downloadOne(rep, { id: '' }, options)).rejects.toThrow(error);
-    });
-  });
-
-  describe('updateOne', () => {
-    it('should be return file entity', async () => {
-      const received = await service.updateOne(expected as unknown as Multipart, {
-        id: expected.id,
-      });
-      const url = new URL(process.env.CDN);
-      url.pathname = path.join(url?.pathname, String(expected.title));
-      url.searchParams.set('id', expected.id);
-      expect(received).toBeInstanceOf(FileEntity);
-      expect(received.src).toEqual(url.toString());
-      expect(received).toEqual(expected);
-    });
-
-    it('should be return conflict exception', async () => {
-      const error = new ConflictException(ErrorTypeEnum.FILE_ALREADY_EXIST);
-      const data = { ...expected, id: '' } as unknown as Multipart;
-      return expect(service.updateOne(data, { id: expected.id })).rejects.toThrow(error);
     });
   });
 

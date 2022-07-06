@@ -59,6 +59,11 @@ export enum ErrorTypeEnum {
   NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
 
   /**
+   * SOCKETS
+   */
+  SOCKET_ERROR = 'SOCKET_ERROR',
+
+  /**
    * CHAT
    */
   CHAT_ALREADY_EXIST = 'CHAT_ALREADY_EXISTS',

@@ -3,8 +3,6 @@ import { MailDataRequired } from '@sendgrid/helpers/classes/mail';
 import { ClientResponse } from '@sendgrid/client/src/response';
 import { MailService } from '@sendgrid/mail';
 
-import * as deepmerge from 'deepmerge';
-
 import { SendGridModuleOptions } from './interfaces';
 
 import { SENDGRID_MODULE_OPTIONS } from './sendgrid.constants';
@@ -15,7 +13,7 @@ export class SendGridService extends MailService {
 
   private mergeWithDefaultMailData(data: Partial<MailDataRequired>): MailDataRequired {
     if (!this.options.default) return data as MailDataRequired;
-    return deepmerge(this.options.default, data);
+    return { ...this.options.default, ...data } as MailDataRequired;
   }
 
   constructor(

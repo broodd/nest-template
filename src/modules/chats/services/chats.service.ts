@@ -146,7 +146,7 @@ export class ChatsService {
     user: Partial<UserEntity>,
   ): Promise<PaginationChatsDto> {
     const { activeChatId } = options;
-    const qb = this.find(instanceToPlain(options));
+    const qb = this.find(instanceToPlain(options)).andWhere(options.whereBrackets);
 
     /**
      * Join last message

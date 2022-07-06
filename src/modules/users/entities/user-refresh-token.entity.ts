@@ -11,6 +11,9 @@ import {
 import { UserEntity } from './user.entity';
 import { Exclude } from 'class-transformer';
 
+/**
+ * [description]
+ */
 @Entity('user_refresh_tokens')
 export class UserRefreshTokenEntity {
   /**

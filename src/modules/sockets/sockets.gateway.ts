@@ -44,12 +44,9 @@ export class SocketsGateway implements OnGatewayConnection, OnGatewayDisconnect 
   public async handleConnection(@ConnectedSocket() socket: Socket): Promise<void> {
     try {
       const { token } = socket.handshake.auth;
-      const { id, ppid } = this.jwtService.verify<UserEntity>(token);
+      const { id } = this.jwtService.verify<UserEntity>(token);
 
-      await this.usersService.selectOne(
-        { id, ppid },
-        { select: ['id'], loadEagerRelations: false },
-      );
+      await this.usersService.selectOne({ id }, { select: ['id'], loadEagerRelations: false });
 
       socket.data = { user: { id } };
       this.socketsService.addOne(id, socket);

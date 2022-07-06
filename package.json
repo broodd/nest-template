@@ -38,6 +38,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^1.7.1",
     "@nestjs/bull": "^0.5.3",
     "@nestjs/common": "^8.0.8",
     "@nestjs/core": "^8.0.8",
@@ -65,6 +66,8 @@
     "fastify-multipart": "^5.3.1",
     "fastify-swagger": "^5.1.0",
     "firebase-admin": "^10.2.0",
+    "handlebars": "^4.7.7",
+    "nodemailer": "^6.7.6",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "pg": "^8.7.1",

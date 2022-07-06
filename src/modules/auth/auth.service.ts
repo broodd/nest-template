@@ -6,9 +6,8 @@ import { Cache } from 'cache-manager';
 
 import { randomBytes } from 'crypto';
 import { compare } from 'src/common/helpers';
-
 import { ErrorTypeEnum } from 'src/common/enums';
-import { SendGridService } from 'src/sendgrid';
+import { SendMailService } from 'src/sendmail';
 
 import { UserEntity, UserRefreshTokenEntity } from '../users/entities';
 import { UserRefreshTokensService, UsersService } from '../users/services';
@@ -25,6 +24,8 @@ import {
   JwtAccessTokenPayloadDto,
   JwtRefreshTokenPayloadDto,
 } from './dto';
+import { TemplatedMailConfirmationType } from 'src/sendmail/types';
+import { TemplateNameEnum } from 'src/sendmail/enums';
 
 /**
  * [description]
@@ -44,7 +45,7 @@ export class AuthService {
    */
   constructor(
     private readonly userRefreshTokensService: UserRefreshTokensService,
-    private readonly sendGridService: SendGridService,
+    private readonly sendMailService: SendMailService,
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -200,11 +201,11 @@ export class AuthService {
     const code = this.generateCode();
     this.cacheManager.set<string>(id, code);
 
-    await this.sendGridService.sendMail({
-      to: data.email,
+    await this.sendMailService.sendTemplatedEmail<TemplatedMailConfirmationType>({
+      to: [data.email],
       subject: 'Забули свій пароль?',
-      text: `Код для скидання паролю: ${code}`,
-      html: `Код для скидання паролю: <b>${code}</b>`,
+      template: TemplateNameEnum.CONFIRMATION,
+      context: { CODE: code, URL: '' },
     });
   }
 

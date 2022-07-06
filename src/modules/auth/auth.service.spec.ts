@@ -2,8 +2,8 @@ import { CacheModule, ConflictException, BadRequestException } from '@nestjs/com
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtModule } from '@nestjs/jwt';
 
-import { SendGridService } from 'src/sendgrid';
 import { ConfigService } from 'src/config';
+import { SendMailService } from 'src/sendmail';
 import { ErrorTypeEnum } from 'src/common/enums';
 
 import { UserEntity, UserRefreshTokenEntity } from '../users/entities';
@@ -37,7 +37,7 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         {
-          provide: SendGridService,
+          provide: SendMailService,
           useValue: {},
         },
         {

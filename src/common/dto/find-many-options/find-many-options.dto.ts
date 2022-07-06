@@ -3,9 +3,10 @@ import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { FindManyOptions } from 'typeorm';
 
-import { FindOneOptionsDto } from '../find-one-options';
+import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { dotNotation } from 'src/common/helpers';
-import { FindManyBracketsOptions } from 'src/common/interfaces/find-many-brackets.interface';
+
+import { FindOneOptionsDto } from '../find-one-options';
 
 /**
  * [description]

@@ -33,7 +33,7 @@ export class SelectChatsDto extends FindManyOptionsDto<ChatEntity> {
   /**
    * [description]
    */
-  public get where(): FindManyOptions<ChatEntity>['where'] {
+  public get whereBrackets(): Brackets {
     const { search } = this;
     return new Brackets((qb) => {
       if (search)

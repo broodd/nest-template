@@ -11,6 +11,9 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { UserEntity } from 'src/modules/users/entities';
 
+/**
+ * [description]
+ */
 @Entity('user_notification_tokens')
 export class UserNotificationTokenEntity {
   /**

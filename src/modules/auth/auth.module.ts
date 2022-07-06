@@ -12,7 +12,7 @@ import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { CACHE_AUTH_PREFIX } from './auth.constants';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { SendGridModule } from 'src/sendgrid';
+import { SendMailModule } from 'src/sendmail';
 
 /**
  * [description]
@@ -42,15 +42,7 @@ import { SendGridModule } from 'src/sendgrid';
         ) as CacheModuleOptions,
       inject: [ConfigService],
     }),
-    SendGridModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        apiKey: configService.get('SENDGRID_API_KEY'),
-        default: {
-          from: configService.get('SENDGRID_API_SENDER'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    SendMailModule,
     UsersModule,
   ],
   controllers: [AuthController],
