@@ -16,7 +16,11 @@ export const FileDecorator = createParamDecorator(
     options: Omit<BusboyConfig, 'headers'> = { limits: { fileSize: 5e6 } },
     ctx: ExecutionContext,
   ): Promise<Multipart> => {
-    const request = ctx.switchToHttp().getRequest<FastifyRequest>();
+    const request = ctx
+      .switchToHttp()
+      .getRequest<
+        FastifyRequest & { file: (options?: Omit<BusboyConfig, 'headers'>) => Promise<Multipart> }
+      >();
     return request.file(options).catch(() => {
       throw new PayloadTooLargeException(ErrorTypeEnum.FILE_TOO_LARGE);
     });

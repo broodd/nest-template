@@ -187,7 +187,7 @@ export class NotificationsService {
 
   /**
    * [description]
-   * @param data
+   * @param entity
    */
   public generateNotificationProps(entity: Partial<NotificationEntity>): BaseMessage {
     const notification: Notification = { title: entity.title };

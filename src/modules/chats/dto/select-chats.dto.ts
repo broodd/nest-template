@@ -1,7 +1,7 @@
 import { IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Brackets, FindManyOptions } from 'typeorm';
 import { Transform } from 'class-transformer';
+import { Brackets } from 'typeorm';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 import { querySearch } from 'src/common/helpers';
@@ -37,9 +37,9 @@ export class SelectChatsDto extends FindManyOptionsDto<ChatEntity> {
     const { search } = this;
     return new Brackets((qb) => {
       if (search)
-        qb.andWhere('(' + querySearch('ChatEntity_participant_other_user.fullName'), {
+        qb.andWhere(querySearch('ChatEntity_participant_other_user.email'), {
           search: `%${search}%`,
-        }).orWhere(querySearch('ChatEntity_participant_other_user.companyName') + ')');
+        });
     });
   }
 }

@@ -50,7 +50,7 @@ export class AppController {
   public status(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.disk.checkStorage('disk', { path: this.path, thresholdPercent: 1 }),
-      () => this.memory.checkHeap('memory_heap', 2 ** 30),
+      () => this.memory.checkHeap('memory_heap', 2 ** 31),
       () => this.memory.checkRSS('memory_rss', 2 ** 31),
       () => this.typeorm.pingCheck('database'),
       () =>
