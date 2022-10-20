@@ -1,3 +1,7 @@
+## [0.2.2](https://github.com/broodd/nest-template/compare/v0.2.1...v0.2.2) (2022-10-20)
+
+
+
 ## [0.2.1](https://github.com/broodd/nest-template/compare/v0.2.0...v0.2.1) (2022-07-07)
 
 
@@ -22,10 +26,6 @@
 ### Features
 
 * **notifications:** implemented push notifications ([c6f5ec4](https://github.com/broodd/nest-template/commit/c6f5ec4c0b2751f59029e097bd7a4dba64c25615))
-
-
-
-## 0.0.1 (2022-05-06)
 
 
 
