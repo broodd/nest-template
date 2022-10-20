@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Multipart } from 'fastify-multipart';
+import { MultipartFile } from '@fastify/multipart';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { StorageService } from 'src/multipart';
@@ -15,7 +15,6 @@ import { UserEntity } from '../users/entities';
 import { PaginationFilesDto, SelectFilesDto, SelectFileDto } from './dto';
 import { FilesService } from './files.service';
 import { FileEntity } from './entities';
-import { join } from 'path';
 
 describe('FilesService', () => {
   const expected = {
@@ -43,8 +42,8 @@ describe('FilesService', () => {
         {
           provide: StorageService,
           useValue: {
-            createOne: (multipart: Multipart): Multipart => multipart,
-            selectOne: (multipart: Multipart): Multipart => multipart,
+            createOne: (multipart: MultipartFile): MultipartFile => multipart,
+            selectOne: (multipart: MultipartFile): MultipartFile => multipart,
             deleteOne: () => undefined,
           },
         },
@@ -60,21 +59,15 @@ describe('FilesService', () => {
 
   describe('createOne', () => {
     it('should be return file entity', async () => {
-      const received = await service.createOne(expected as unknown as Multipart, owner);
-      /**
-       * @xample for S3
-       * const url = new URL(expected.filename + expected.extname, process.env.CDN);
-       */
-
-      const url = new URL(join(process.env.CDN, expected.title));
-      url.searchParams.set('id', expected.id);
+      const received = await service.createOne(expected as unknown as MultipartFile, owner);
+      const url = `${process.env.CDN}/${expected.filename}${expected.extname}`;
       expect(received).toBeInstanceOf(FileEntity);
       expect(received.src).toEqual(url.toString());
     });
 
     it('should be return conflict exception', async () => {
       const error = new ConflictException(ErrorTypeEnum.FILE_ALREADY_EXIST);
-      const data = { ...expected, id: '' } as unknown as Multipart;
+      const data = { ...expected, id: '' } as unknown as MultipartFile;
       return expect(service.createOne(data, owner)).rejects.toThrow(error);
     });
   });

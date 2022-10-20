@@ -20,21 +20,21 @@ import { ChatEntity } from './chat.entity';
  */
 @Entity('chat_messages')
 export class ChatMessageEntity {
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })
   @PrimaryGeneratedColumn('uuid')
   public readonly id: string;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ enum: ChatMessageTypeEnum, default: ChatMessageTypeEnum.TEXT })
   @Column({ type: 'enum', enum: ChatMessageTypeEnum, default: ChatMessageTypeEnum.TEXT })
   public readonly type: ChatMessageTypeEnum;
 
-  /*
+  /**
    * [description]
    */
 
@@ -42,14 +42,14 @@ export class ChatMessageEntity {
   @Column({ type: 'enum', enum: ChatMessageStatusEnum, default: ChatMessageStatusEnum.SENT })
   public readonly status: ChatMessageStatusEnum;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ maxLength: 6e4, nullable: true })
   @Column({ type: 'varchar', length: 6e4, nullable: true })
   public readonly text: string;
 
-  /*
+  /**
    * [description]
    */
   @JoinColumn()
@@ -62,7 +62,7 @@ export class ChatMessageEntity {
   })
   public readonly file: Partial<FileEntity>;
 
-  /*
+  /**
    * [description]
    */
   @JoinColumn()
@@ -70,7 +70,7 @@ export class ChatMessageEntity {
   @ManyToOne(() => ChatEntity, ({ messages }) => messages, { onDelete: 'CASCADE', nullable: false })
   public readonly chat: Partial<ChatEntity>;
 
-  /*
+  /**
    * [description]
    */
   @JoinColumn()
@@ -78,7 +78,7 @@ export class ChatMessageEntity {
   @ManyToOne(() => ChatMessageEntity, { onDelete: 'CASCADE', nullable: true })
   public readonly reply: Partial<ChatMessageEntity>;
 
-  /*
+  /**
    * [description]
    */
   @JoinColumn()
@@ -86,7 +86,7 @@ export class ChatMessageEntity {
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE', nullable: false })
   public readonly owner: Partial<UserEntity>;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })
@@ -97,7 +97,7 @@ export class ChatMessageEntity {
   })
   public readonly createdAt: Date;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })

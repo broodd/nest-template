@@ -1,86 +1,84 @@
-import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
-import { ReadStream, createWriteStream, createReadStream } from 'fs';
-import { stat, mkdir, unlink } from 'fs/promises';
-import { Multipart } from 'fastify-multipart';
-import { pipeline } from 'stream/promises';
-import { BusboyConfig } from 'busboy';
-import { randomBytes } from 'crypto';
-import { join, extname } from 'path';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PromiseResult } from 'aws-sdk/lib/request';
+import { extname as extName } from 'node:path';
+import { MultipartFile } from '@fastify/multipart';
+import { AWSError } from 'aws-sdk/lib/error';
+import { randomBytes } from 'node:crypto';
+import { S3 } from 'aws-sdk';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { ConfigService } from 'src/config';
 
-import { MULTIPART_MODULE_OPTIONS } from './multipart.constants';
 import { UploadedFile } from './dto';
+
+type PutObjectRequest = Omit<S3.Types.PutObjectRequest, 'Bucket'>;
+type HeadObjectRequest = Omit<S3.Types.HeadObjectRequest, 'Bucket'>;
 
 /**
  * [description]
  */
 @Injectable()
-export class StorageService implements OnModuleInit {
-  /**
-   * [description]
-   */
-  private readonly options = {
-    mode: parseInt('0700', 8),
-  };
+export class StorageService {
+  private readonly s3: S3;
+  private readonly bucket: S3.BucketName;
 
   /**
    * [description]
+   * @param configService
    */
-  private readonly destination: string;
-
-  /**
-   * [description]
-   * @param configService [description]
-   * @param busboyConfig
-   */
-  constructor(
-    private readonly configService: ConfigService,
-    @Inject(MULTIPART_MODULE_OPTIONS)
-    public readonly busboyConfig?: BusboyConfig,
-  ) {
-    this.destination = this.configService.getDest('STORE_DEST');
+  constructor(private readonly configService: ConfigService) {
+    this.s3 = new S3();
+    this.bucket = this.configService.get('AWS_S3_BUCKET');
   }
 
   /**
    * [description]
    */
-  public async onModuleInit(): Promise<void> {
-    if (await !stat(this.destination)) await mkdir(this.destination, this.options);
-  }
-
-  /**
-   * [description]
-   */
-  public generateName(): { prefix: string; filename: string } {
+  public generateName(): string {
     const filename = randomBytes(16).toString('hex');
     const now = new Date();
     const year = now.getFullYear();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const prefix = `${year}/${month}`;
-    return { prefix, filename: `${prefix}/${filename}` };
+    return `${year}/${month}/${filename}`;
+  }
+
+  /**
+   * [description]
+   * @param options
+   */
+  public async uploadOne(options: PutObjectRequest): Promise<S3.ManagedUpload.SendData> {
+    return this.s3.upload({ ...options, Bucket: this.bucket }).promise();
+  }
+
+  /**
+   * [description]
+   * @param options
+   */
+  public async selectHeadOne(
+    options: HeadObjectRequest,
+  ): Promise<PromiseResult<S3.HeadObjectOutput, AWSError>> {
+    return this.s3.headObject({ ...options, Bucket: this.bucket }).promise();
   }
 
   /**
    * [description]
    * @param multipart
    */
-  public async createOne(multipart: Multipart): Promise<UploadedFile> {
+  public async createOne(multipart: MultipartFile): Promise<UploadedFile> {
     const { file, encoding, mimetype } = multipart;
-    const { prefix, filename } = this.generateName();
-    const filePath = join(this.destination, filename);
-    const ext = extname(multipart.filename);
+    const extname = extName(multipart.filename);
+    const filename = this.generateName();
 
     try {
-      await mkdir(join(this.destination, prefix), { recursive: true });
-      await pipeline(file, createWriteStream(filePath, this.options));
-      const { size } = await stat(filePath);
+      const Key = filename + extname;
+      await this.uploadOne({ Key, Body: file, ContentType: mimetype });
+      const { ContentLength: size } = await this.selectHeadOne({ Key });
+
       return new UploadedFile({
         filename,
         mimetype,
         encoding,
-        extname: ext,
+        extname,
         title: multipart.filename,
         fileSize: size.toString(),
       });
@@ -91,28 +89,16 @@ export class StorageService implements OnModuleInit {
 
   /**
    * [description]
-   * @param file    [description]
-   * @param options
+   * @param Key
    */
-  public async selectOne(file: Partial<Multipart>, options: any = {}): Promise<ReadStream> {
-    try {
-      const fileDest = join(this.destination, file.filename);
-      await stat(fileDest);
-      return createReadStream(fileDest, { emitClose: false, ...options });
-    } catch {
-      throw new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
-    }
-  }
-
-  /**
-   * [description]
-   * @param filename {string} [description]
-   * @return {void}
-   */
-  public async deleteOne(filename: string): Promise<void> {
-    const fileDest = join(this.destination, filename);
-    return unlink(fileDest).catch(() => {
-      throw new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
-    });
+  public async deleteOne(
+    Key: S3.ObjectKey,
+  ): Promise<PromiseResult<S3.DeleteObjectOutput, AWSError>> {
+    return this.s3
+      .deleteObject({ Key, Bucket: this.bucket })
+      .promise()
+      .catch(() => {
+        throw new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
+      });
   }
 }

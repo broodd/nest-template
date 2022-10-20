@@ -1,9 +1,9 @@
 /**
  * [description]
  */
-export const MULTIPART_MODULE_OPTIONS = 'MULTIPART_MODULE_OPTIONS';
+export const MULTIPART_MODULE_OPTIONS = 'multipart_MODULE_OPTIONS';
 
 /**
  * [description]
  */
-export const MULTIPART_MODULE = 'MULTIPART_MODULE';
+export const MULTIPART_MODULE = 'multipart_MODULE';

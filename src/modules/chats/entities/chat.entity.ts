@@ -19,14 +19,14 @@ import { ChatMessageEntity } from './chat-message.entity';
  */
 @Entity('chats')
 export class ChatEntity {
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })
   @PrimaryGeneratedColumn('uuid')
   public readonly id: string;
 
-  /*
+  /**
    * [description]
    */
   @ApiHideProperty()
@@ -35,21 +35,21 @@ export class ChatEntity {
   })
   public readonly participants: Partial<ChatParticipantEntity>[];
 
-  /*
+  /**
    * [description]
    */
   @ApiHideProperty()
   @ManyToOne(() => ChatMessageEntity, { onDelete: 'SET NULL', nullable: true })
   public readonly lastMessage: Partial<ChatMessageEntity>;
 
-  /*
+  /**
    * [description]
    */
   @ApiHideProperty()
   @OneToMany(() => ChatMessageEntity, ({ chat }) => chat)
   public readonly messages: Partial<ChatMessageEntity>[];
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })
@@ -60,7 +60,7 @@ export class ChatEntity {
   })
   public readonly createdAt: Date;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty({ readOnly: true })
@@ -70,14 +70,14 @@ export class ChatEntity {
   })
   public readonly updatedAt: Date;
 
-  /*
+  /**
    * [description]
    */
   @ApiHideProperty()
   @Transform(({ value }) => value && value.user)
   public readonly participant: Partial<UserEntity>;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty()

@@ -1,8 +1,6 @@
-import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody, ApiParam } from '@nestjs/swagger';
-import { Multipart } from 'fastify-multipart';
-import { FastifyReply } from 'fastify';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { MultipartFile } from '@fastify/multipart';
 import {
-  Res,
   Get,
   Post,
   Patch,
@@ -22,13 +20,7 @@ import { ID } from 'src/common/dto';
 import { JwtAuthGuard } from '../auth/guards';
 
 import { FileEntity } from './entities';
-import {
-  SelectFileDto,
-  CreateFileDto,
-  SelectFilesDto,
-  DownloadFileDto,
-  PaginationFilesDto,
-} from './dto';
+import { SelectFileDto, CreateFileDto, SelectFilesDto, PaginationFilesDto } from './dto';
 
 import { UserEntity } from '../users/entities';
 import { FilesService } from './files.service';
@@ -57,7 +49,10 @@ export class FilesController {
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: CreateFileDto })
   @ApiConsumes('multipart/form-data')
-  public async createOne(@File() file: Multipart, @User() owner: UserEntity): Promise<FileEntity> {
+  public async createOne(
+    @File() file: MultipartFile,
+    @User() owner: UserEntity,
+  ): Promise<FileEntity> {
     return this.filesService.createOne(file, { owner: { id: owner.id } });
   }
 
@@ -103,7 +98,7 @@ export class FilesController {
   @ApiBody({ type: CreateFileDto })
   @ApiConsumes('multipart/form-data')
   public async updateOne(
-    @File() file: Multipart,
+    @File() file: MultipartFile,
     @Param() conditions: ID,
     @User() owner: UserEntity,
   ): Promise<FileEntity> {
@@ -121,20 +116,5 @@ export class FilesController {
   @UseRole(UserRoleEnum.ADMIN)
   public async deleteOne(@Param() conditions: ID, @User() owner: UserEntity): Promise<FileEntity> {
     return this.filesService.deleteOne({ ...conditions, owner: { id: owner.id } });
-  }
-
-  /**
-   * [description]
-   * @param rep
-   * @param owner
-   * @param options
-   */
-  @Get('download/:filename')
-  @ApiParam({ name: 'filename', type: String })
-  public async downloadOne(
-    @Res() rep: FastifyReply,
-    @Query() options: DownloadFileDto,
-  ): Promise<FastifyReply> {
-    return this.filesService.downloadOne(rep, { id: options.id }, options);
   }
 }

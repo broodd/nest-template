@@ -1,7 +1,6 @@
 import { ApiHideProperty, ApiProperty, PickType } from '@nestjs/swagger';
-import { Multipart } from 'fastify-multipart';
+import { MultipartFile } from '@fastify/multipart';
 import { Expose } from 'class-transformer';
-import { join } from 'node:path';
 import {
   Column,
   Entity,
@@ -18,7 +17,7 @@ import { UserEntity } from 'src/modules/users/entities';
  * [description]
  */
 @Entity('files')
-export class FileEntity implements Partial<Multipart> {
+export class FileEntity implements Partial<MultipartFile> {
   /**
    * [description]
    */
@@ -28,16 +27,24 @@ export class FileEntity implements Partial<Multipart> {
 
   /**
    * [description]
-   * @example for s3
-   * return `${process.env.CDN}/${this.filename}${this.extname}`;
    */
   @Expose({ toClassOnly: true })
   @ApiProperty({ readOnly: true })
   get src(): string {
-    if (!this.fileSize) return null;
-    const url = new URL(join(process.env.CDN, this.title));
-    url.searchParams.set('id', this.id);
-    return url.toString();
+    /**
+     * @example for s3
+     */
+    return `${process.env.CDN}/${this.filename}${this.extname}`;
+
+    /**
+     * @example for disk storage
+     */
+    /* 
+      if (!this.fileSize) return null;
+      const url = new URL(join(process.env.CDN, this.title));
+      url.searchParams.set('id', this.id);
+      return url.toString();
+    */
   }
 
   /**

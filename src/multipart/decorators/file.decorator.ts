@@ -1,5 +1,5 @@
 import { PayloadTooLargeException, createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Multipart } from 'fastify-multipart';
+import { MultipartFile } from '@fastify/multipart';
 import { FastifyRequest } from 'fastify';
 import { BusboyConfig } from 'busboy';
 
@@ -15,12 +15,12 @@ export const FileDecorator = createParamDecorator(
   async (
     options: Omit<BusboyConfig, 'headers'> = { limits: { fileSize: 5e6 } },
     ctx: ExecutionContext,
-  ): Promise<Multipart> => {
-    const request = ctx
-      .switchToHttp()
-      .getRequest<
-        FastifyRequest & { file: (options?: Omit<BusboyConfig, 'headers'>) => Promise<Multipart> }
-      >();
+  ): Promise<MultipartFile> => {
+    const request = ctx.switchToHttp().getRequest<
+      FastifyRequest & {
+        file: (options?: Omit<BusboyConfig, 'headers'>) => Promise<MultipartFile>;
+      }
+    >();
     return request.file(options).catch(() => {
       throw new PayloadTooLargeException(ErrorTypeEnum.FILE_TOO_LARGE);
     });

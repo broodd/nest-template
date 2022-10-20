@@ -4,9 +4,9 @@ import { initializeApp } from 'firebase-admin/app';
 import { credential } from 'firebase-admin';
 import { NestFactory } from '@nestjs/core';
 
-import multipart from 'fastify-multipart';
-import compress from 'fastify-compress';
-import helmet from 'fastify-helmet';
+import multipart from '@fastify/multipart';
+import compress from '@fastify/compress';
+import helmet from '@fastify/helmet';
 
 import { HttpExceptionFilter } from './common/filters';
 import { ConfigMode, ConfigService } from './config';

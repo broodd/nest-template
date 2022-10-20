@@ -1,4 +1,4 @@
-import { FastifyMultipartOptions } from 'fastify-multipart';
+import { FastifyMultipartOptions } from '@fastify/Multipart';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Type } from '@nestjs/common';
 

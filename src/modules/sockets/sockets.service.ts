@@ -7,14 +7,18 @@ import { Socket } from 'socket.io';
 @Injectable()
 export class SocketsService {
   /**
-   * [description]
+   * A map of active connections where **key** is a **userId**
+   * and value is a map where **id** is **socketId** and value is **socket**
    * {
-   *    'user-id': {
-   *        'socket-id': Socket
+   *    'userId': {
+   *        'socketId': Socket
    *    }
    * }
    */
-  private usersSockets: Record<string, Record<string, Socket>> = {};
+  private readonly usersSockets: Map<string, Map<string, Socket>> = new Map<
+    string,
+    Map<string, Socket>
+  >();
 
   /**
    * [description]
@@ -22,13 +26,13 @@ export class SocketsService {
    * @param socket
    */
   public addOne(userId: string, socket: Socket): void {
-    const store = (this.usersSockets[userId] = this.usersSockets[userId] || {});
-    store[socket.id] = socket;
+    if (!this.usersSockets.get(userId)) this.usersSockets.set(userId, new Map<string, Socket>());
+    this.usersSockets.get(userId).set(socket.id, socket);
   }
 
   /**
    * [description]
-   * @param userId
+   * @param userIds
    */
   public selectAllIds(userIds: string[]): string[] {
     return userIds.reduce<string[]>((acc, current) => acc.concat(this.selectOneIds(current)), []);
@@ -39,8 +43,7 @@ export class SocketsService {
    * @param userId
    */
   public selectOneIds(userId: string): string[] {
-    if (!this.usersSockets[userId]) return [];
-    return Object.keys(this.usersSockets[userId]);
+    return Array.from(this.usersSockets.get(userId)?.keys() ?? []);
   }
 
   /**
@@ -48,9 +51,8 @@ export class SocketsService {
    * @param userId
    * @param socketId
    */
-  public selectOne(userId: string, socketId: string): Socket {
-    if (!this.usersSockets[userId]) return null;
-    return this.usersSockets[userId][socketId];
+  public selectOne(userId: string, socketId: string): Socket | undefined {
+    return this.usersSockets.get(userId)?.get(socketId);
   }
 
   /**
@@ -59,9 +61,9 @@ export class SocketsService {
    * @param socketId
    */
   public removeOne(userId: string, socketId: string): void {
-    if (!this.usersSockets[userId]) return;
-    delete this.usersSockets[userId][socketId];
-
-    if (!Object.keys(this.usersSockets[userId]).length) delete this.usersSockets[userId];
+    const sockets = this.usersSockets.get(userId);
+    if (!sockets) return;
+    sockets.delete(socketId);
+    if (!sockets.size) this.usersSockets.delete(userId);
   }
 }

@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StorageService } from 'src/multipart';
 import { createRepMock } from 'test/utils';
 
-import { DownloadFileDto, PaginationFilesDto, SelectFileDto, SelectFilesDto } from './dto';
+import { PaginationFilesDto, SelectFileDto, SelectFilesDto } from './dto';
 import { ConfigService } from 'src/config';
 import { FileEntity } from './entities';
 
@@ -16,7 +16,6 @@ describe('FilesController', () => {
 
   const optionsOne = new SelectFileDto();
   const optionsAll = new SelectFilesDto();
-  const downloadFile = new DownloadFileDto();
   const ownerOfFile = new UserEntity();
 
   beforeAll(async () => {
@@ -73,13 +72,6 @@ describe('FilesController', () => {
     it('should be return file entity', async () => {
       const received = await controller.deleteOne({ id: '' }, ownerOfFile);
       expect(received).toBeInstanceOf(FileEntity);
-    });
-  });
-
-  describe('downloadOne', () => {
-    it('should be return file entity', async () => {
-      const received = await controller.downloadOne(createRepMock(), downloadFile);
-      expect(received).toBeDefined();
     });
   });
 });

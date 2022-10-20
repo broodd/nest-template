@@ -199,7 +199,7 @@ export class AuthService {
     });
 
     const code = this.generateCode();
-    this.cacheManager.set<string>(id, code);
+    this.cacheManager.set(id, code);
 
     await this.sendMailService.sendTemplatedEmail<TemplatedMailConfirmationType>({
       to: [data.email],

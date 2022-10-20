@@ -1,5 +1,5 @@
 import { Injectable, PipeTransform, UnsupportedMediaTypeException } from '@nestjs/common';
-import { Multipart } from 'fastify-multipart';
+import { MultipartFile } from '@fastify/multipart';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { ConfigService } from 'src/config';
@@ -26,7 +26,7 @@ export class FileValidationPipe implements PipeTransform {
    * [description]
    * @param value
    */
-  transform(value: Multipart) {
+  transform(value: MultipartFile) {
     if (!this.allowedTypes.includes(value.mimetype))
       throw new UnsupportedMediaTypeException(ErrorTypeEnum.FILE_UNSUPPORTED_TYPE);
     return value;

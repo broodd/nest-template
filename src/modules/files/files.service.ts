@@ -1,8 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
-import { Multipart } from 'fastify-multipart';
-import { FastifyReply } from 'fastify';
+import { MultipartFile } from '@fastify/multipart';
 import {
   Repository,
   SaveOptions,
@@ -18,7 +17,7 @@ import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { ErrorTypeEnum } from 'src/common/enums';
 import { StorageService } from 'src/multipart';
 
-import { DownloadFileDto, PaginationFilesDto } from './dto';
+import { PaginationFilesDto } from './dto';
 import { FileEntity } from './entities';
 
 /**
@@ -43,7 +42,7 @@ export class FilesService {
    * @param options
    */
   public async createOne(
-    multipart: Multipart,
+    multipart: MultipartFile,
     data?: Partial<FileEntity>,
     options: SaveOptions = { transaction: false },
   ): Promise<FileEntity> {
@@ -131,7 +130,7 @@ export class FilesService {
    * @param options
    */
   public async updateOne(
-    file: Multipart,
+    file: MultipartFile,
     conditions: FindOptionsWhere<FileEntity>,
     options: SaveOptions = { transaction: false },
   ): Promise<FileEntity> {
@@ -162,51 +161,5 @@ export class FilesService {
         throw new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
       });
     });
-  }
-
-  /**
-   * [description]
-   * @param rep
-   * @param conditions
-   * @param options
-   */
-  public async downloadOne(
-    rep: FastifyReply,
-    conditions: FindOptionsWhere<FileEntity>,
-    { download, ...options }: DownloadFileDto,
-  ): Promise<FastifyReply> {
-    const { filename, title, fileSize, mimetype } = await this.selectOne(conditions);
-    const disposition = download ? 'attachment' : 'inline';
-    if (!rep.request.headers.range)
-      return rep
-        .type(mimetype)
-        .status(200)
-        .headers({
-          'accept-ranges': 'bytes',
-          'content-length': +fileSize,
-          'content-disposition': `${disposition}; filename*=utf-8''${title}`,
-        })
-        .send(await this.storageService.selectOne({ filename }, options));
-
-    const range = rep.request.headers.range.replace(/bytes=/, '').split('-');
-    const end = range[1] ? parseInt(range[1], 10) : +fileSize - 1;
-    const start = range[0] ? parseInt(range[0], 10) : +fileSize - end;
-
-    if (start >= +fileSize || end >= +fileSize)
-      return rep
-        .status(416)
-        .headers({ 'Content-Range': `bytes */${+fileSize}` })
-        .send();
-
-    return rep
-      .type(mimetype)
-      .status(206)
-      .headers({
-        'accept-ranges': 'bytes',
-        'content-length': end - start + 1,
-        'content-disposition': `${disposition}; filename*=utf-8''${title}`,
-        'content-range': `bytes ${start}-${end}/${+fileSize}`,
-      })
-      .send(await this.storageService.selectOne({ filename }, { start, end }));
   }
 }
