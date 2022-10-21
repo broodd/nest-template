@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [] # set branches (default `master`)
+    branches: [some-deploy-branch] # set branches (default `master`)
 
 jobs:
   test:

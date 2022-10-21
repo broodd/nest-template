@@ -25,7 +25,7 @@ import {
   JwtRefreshTokenPayloadDto,
 } from './dto';
 import { TemplatedMailConfirmationType } from 'src/sendmail/types';
-import { TemplateNameEnum } from 'src/sendmail/enums';
+import { TemplateNameEnum, TemplateSubjectEnum } from 'src/sendmail/enums';
 
 /**
  * [description]
@@ -203,7 +203,7 @@ export class AuthService {
 
     await this.sendMailService.sendTemplatedEmail<TemplatedMailConfirmationType>({
       to: [data.email],
-      subject: 'Забули свій пароль?',
+      subject: TemplateSubjectEnum.CONFIRMATION,
       template: TemplateNameEnum.CONFIRMATION,
       context: { CODE: code, URL: '' },
     });

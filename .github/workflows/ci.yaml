@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [] # set branches (default `master`)
+    branches: [some-test-branch] # set branches (default `master, develop`)
   push:
-    branches: [] # set branches (default `master`)
+    branches: [some-test-branch] # set branches (default `master, develop`)
   workflow_call:
 
 jobs:

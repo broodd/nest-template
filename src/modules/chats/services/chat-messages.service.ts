@@ -57,7 +57,7 @@ export class ChatMessagesService {
 
         await this.chatsService.update(
           { id: entityLike.chat.id },
-          { lastMessage: { id } },
+          { lastMessage: { id: saved.id } },
           transactionalEntityManager,
         );
         return saved;

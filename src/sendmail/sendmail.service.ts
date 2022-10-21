@@ -1,7 +1,7 @@
 import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 
-import { ResponseMailType, TemplatedMailType } from './types';
+import { ResponseMailType, MailType } from './types';
 
 /**
  * [description]
@@ -23,10 +23,11 @@ export class SendMailService {
    * [description]
    * @param data
    */
-  public async sendTemplatedEmail<T = TemplatedMailType>(data: T): Promise<ResponseMailType> {
-    return this.mailerService.sendMail(data).catch((error) => {
-      this.logger.error(error);
-      throw new BadGatewayException();
-    });
+  public async sendTemplatedEmail<T extends MailType>(data: T): Promise<ResponseMailType> {
+    if (data.to.length)
+      return this.mailerService.sendMail(data).catch((error) => {
+        this.logger.error(error);
+        throw new BadGatewayException();
+      });
   }
 }
