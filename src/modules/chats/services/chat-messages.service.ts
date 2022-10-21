@@ -7,8 +7,7 @@ import {
   FindOptionsWhere,
   FindManyOptions,
   FindOneOptions,
-  RemoveOptions,
-  SaveOptions,
+  EntityManager,
   Repository,
   Not,
 } from 'typeorm';
@@ -41,22 +40,30 @@ export class ChatMessagesService {
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<ChatMessageEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatMessageEntity> {
-    return this.chatMessageEntityRepository.manager.transaction(async () => {
-      const entity = this.chatMessageEntityRepository.create(entityLike);
-      const { id } = await this.chatMessageEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
-      });
+    const { id } = await this.chatMessageEntityRepository.manager.transaction(
+      async (chatMessageEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : chatMessageEntityManager;
 
-      await this.chatsService.update({ id: entityLike.chat.id }, { lastMessage: { id } });
+        const entity = this.chatMessageEntityRepository.create(entityLike);
+        const saved = await transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
+        });
 
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+        await this.chatsService.update(
+          { id: entityLike.chat.id },
+          { lastMessage: { id } },
+          transactionalEntityManager,
+        );
+        return saved;
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
@@ -169,56 +176,69 @@ export class ChatMessagesService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateAll(
     conditions: FindOptionsWhere<ChatMessageEntity>,
     entityLike: Partial<ChatMessageEntity>,
+    entityManager?: EntityManager,
   ): Promise<number> {
-    return this.chatMessageEntityRepository.manager.transaction(async () => {
-      return this.chatMessageEntityRepository
-        .update(conditions, entityLike)
-        .then((data) => data.affected)
-        .catch(() => {
-          throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
-        });
-    });
+    return this.chatMessageEntityRepository.manager.transaction(
+      async (chatMessageEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : chatMessageEntityManager;
+
+        return transactionalEntityManager
+          .update(ChatMessageEntity, conditions, entityLike)
+          .then((data) => data.affected)
+          .catch(() => {
+            throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
+          });
+      },
+    );
   }
 
   /**
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<ChatMessageEntity>,
     entityLike: Partial<ChatMessageEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatMessageEntity> {
-    return this.chatMessageEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.chatMessageEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.chatMessageEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
-      });
-    });
+    return this.chatMessageEntityRepository.manager.transaction(
+      async (chatMessageEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : chatMessageEntityManager;
+
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.chatMessageEntityRepository.merge(mergeIntoEntity, entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.CHAT_MESSAGE_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<ChatMessageEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatMessageEntity> {
-    return this.chatMessageEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions, options);
-      return this.chatMessageEntityRepository.remove(entity).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.CHAT_MESSAGE_NOT_FOUND);
-      });
-    });
+    return this.chatMessageEntityRepository.manager.transaction(
+      async (chatMessageEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : chatMessageEntityManager;
+
+        const entity = await this.selectOne(conditions);
+        return transactionalEntityManager.remove(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.CHAT_MESSAGE_NOT_FOUND);
+        });
+      },
+    );
   }
 }

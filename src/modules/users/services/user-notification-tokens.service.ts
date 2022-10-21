@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
 import {
   Repository,
-  SaveOptions,
-  RemoveOptions,
+  EntityManager,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -33,18 +32,24 @@ export class UserNotificationTokensService {
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<UserNotificationTokenEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserNotificationTokenEntity> {
-    return this.userNotificationTokenEntityRepository.manager.transaction(async () => {
-      const entity = this.userNotificationTokenEntityRepository.create(entityLike);
-      return this.userNotificationTokenEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_ALREADY_EXIST);
-      });
-    });
+    return this.userNotificationTokenEntityRepository.manager.transaction(
+      async (userNotificationTokenEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : userNotificationTokenEntityManager;
+
+        const entity = this.userNotificationTokenEntityRepository.create(entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
@@ -95,36 +100,51 @@ export class UserNotificationTokensService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<UserNotificationTokenEntity>,
     entityLike: Partial<UserNotificationTokenEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserNotificationTokenEntity> {
-    return this.userNotificationTokenEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.userNotificationTokenEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.userNotificationTokenEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_ALREADY_EXIST);
-      });
-    });
+    return this.userNotificationTokenEntityRepository.manager.transaction(
+      async (userNotificationTokenEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : userNotificationTokenEntityManager;
+
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.userNotificationTokenEntityRepository.merge(
+          mergeIntoEntity,
+          entityLike,
+        );
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<UserNotificationTokenEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserNotificationTokenEntity> {
-    return this.userNotificationTokenEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions);
-      return this.userNotificationTokenEntityRepository.remove(entity, options).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_NOT_FOUND);
-      });
-    });
+    return this.userNotificationTokenEntityRepository.manager.transaction(
+      async (userNotificationTokenEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : userNotificationTokenEntityManager;
+
+        const entity = await this.selectOne(conditions);
+        return transactionalEntityManager.remove(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.USER_NOTIFICATION_TOKEN_NOT_FOUND);
+        });
+      },
+    );
   }
 }

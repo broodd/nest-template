@@ -5,8 +5,7 @@ import { randomBytes } from 'crypto';
 import { hash } from 'src/common/helpers';
 import {
   Repository,
-  SaveOptions,
-  RemoveOptions,
+  EntityManager,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -35,30 +34,30 @@ export class UserRefreshTokensService {
   /**
    * [description]
    * @param entityLike
-   * @param options
    */
   public async generateAndCreateOne(
     entityLike: Partial<UserRefreshTokenEntity>,
-    options: SaveOptions = { transaction: false },
   ): Promise<UserRefreshTokenEntity> {
     const refreshIdentifier = randomBytes(16).toString('hex');
     const refreshHash = await hash(refreshIdentifier);
-    const entity = await this.createOne({ ...entityLike, ppid: refreshHash }, options);
+    const entity = await this.createOne({ ...entityLike, ppid: refreshHash });
     return { ...entity, ppid: refreshIdentifier };
   }
 
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<UserRefreshTokenEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserRefreshTokenEntity> {
-    return this.userRefreshTokenEntityRepository.manager.transaction(async () => {
+    return this.userRefreshTokenEntityRepository.manager.transaction(async (userEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : userEntityManager;
+
       const entity = this.userRefreshTokenEntityRepository.create(entityLike);
-      return this.userRefreshTokenEntityRepository.save(entity, options).catch(() => {
+      return transactionalEntityManager.save(entity).catch(() => {
         throw new ConflictException(ErrorTypeEnum.USER_REFRESH_TOKEN_ALREADY_EXIST);
       });
     });
@@ -117,31 +116,43 @@ export class UserRefreshTokensService {
   public async updateOne(
     conditions: FindOptionsWhere<UserRefreshTokenEntity>,
     entityLike: Partial<UserRefreshTokenEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserRefreshTokenEntity> {
-    return this.userRefreshTokenEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.userRefreshTokenEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.userRefreshTokenEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.USER_REFRESH_TOKEN_ALREADY_EXIST);
-      });
-    });
+    return this.userRefreshTokenEntityRepository.manager.transaction(
+      async (userRefreshTokenEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : userRefreshTokenEntityManager;
+
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.userRefreshTokenEntityRepository.merge(mergeIntoEntity, entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.USER_REFRESH_TOKEN_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<UserRefreshTokenEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserRefreshTokenEntity> {
-    return this.userRefreshTokenEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions, options);
-      return this.userRefreshTokenEntityRepository.remove(entity).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
-      });
-    });
+    return this.userRefreshTokenEntityRepository.manager.transaction(
+      async (userRefreshTokenEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : userRefreshTokenEntityManager;
+
+        const entity = await this.selectOne(conditions);
+        return transactionalEntityManager.remove(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.USER_REFRESH_TOKEN_NOT_FOUND);
+        });
+      },
+    );
   }
 }

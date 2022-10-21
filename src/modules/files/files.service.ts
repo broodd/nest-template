@@ -4,8 +4,7 @@ import { instanceToPlain } from 'class-transformer';
 import { MultipartFile } from '@fastify/multipart';
 import {
   Repository,
-  SaveOptions,
-  RemoveOptions,
+  EntityManager,
   FindOneOptions,
   FindManyOptions,
   FindOptionsUtils,
@@ -44,13 +43,15 @@ export class FilesService {
   public async createOne(
     multipart: MultipartFile,
     data?: Partial<FileEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<FileEntity> {
-    return this.fileEntityRepository.manager.transaction(async () => {
+    return this.fileEntityRepository.manager.transaction(async (fileEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : fileEntityManager;
+
       const mergeIntoEntity = await this.storageService.createOne(multipart);
       const entityLike = this.fileEntityRepository.create(mergeIntoEntity);
       const entity = this.fileEntityRepository.merge(entityLike, data);
-      return this.fileEntityRepository.save(entity, options).catch(() => {
+      return transactionalEntityManager.save(entity).catch(() => {
         this.storageService.deleteOne(entityLike.filename);
         throw new ConflictException(ErrorTypeEnum.FILE_ALREADY_EXIST);
       });
@@ -127,18 +128,20 @@ export class FilesService {
    * [description]
    * @param file
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     file: MultipartFile,
     conditions: FindOptionsWhere<FileEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<FileEntity> {
-    return this.fileEntityRepository.manager.transaction(async () => {
+    return this.fileEntityRepository.manager.transaction(async (fileEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : fileEntityManager;
+
       const mergeIntoEntity = await this.selectOne(conditions);
       const entityLike = await this.storageService.createOne(file);
       const entity = this.fileEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.fileEntityRepository.save(entity, options).catch(() => {
+      return transactionalEntityManager.save(entity).catch(() => {
         this.storageService.deleteOne(entityLike.filename);
         throw new ConflictException(ErrorTypeEnum.FILE_ALREADY_EXIST);
       });
@@ -148,16 +151,18 @@ export class FilesService {
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<FileEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<FileEntity> {
-    return this.fileEntityRepository.manager.transaction(async () => {
+    return this.fileEntityRepository.manager.transaction(async (fileEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : fileEntityManager;
+
       const entity = await this.selectOne(conditions);
       this.storageService.deleteOne(entity.filename);
-      return this.fileEntityRepository.remove(entity, options).catch(() => {
+      return transactionalEntityManager.remove(entity).catch(() => {
         throw new NotFoundException(ErrorTypeEnum.FILE_NOT_FOUND);
       });
     });

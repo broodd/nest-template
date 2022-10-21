@@ -7,8 +7,7 @@ import {
   FindOptionsUtils,
   FindManyOptions,
   FindOneOptions,
-  RemoveOptions,
-  SaveOptions,
+  EntityManager,
   Repository,
   In,
 } from 'typeorm';
@@ -38,20 +37,23 @@ export class ChatsService {
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<ChatEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatEntity> {
-    return this.chatEntityRepository.manager.transaction(async () => {
-      const entity = this.chatEntityRepository.create(entityLike);
-      const { id } = await this.chatEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.CHAT_ALREADY_EXIST);
-      });
+    const { id } = await this.chatEntityRepository.manager.transaction(
+      async (chatEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : chatEntityManager;
 
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+        const entity = this.chatEntityRepository.create(entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.CHAT_ALREADY_EXIST);
+        });
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
@@ -279,17 +281,19 @@ export class ChatsService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<ChatEntity>,
     entityLike: Partial<ChatEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatEntity> {
-    return this.chatEntityRepository.manager.transaction(async () => {
+    return this.chatEntityRepository.manager.transaction(async (chatEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : chatEntityManager;
+
       const mergeIntoEntity = await this.selectOne(conditions);
       const entity = this.chatEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.chatEntityRepository.save(entity, options).catch(() => {
+      return transactionalEntityManager.save(entity).catch(() => {
         throw new ConflictException(ErrorTypeEnum.CHAT_ALREADY_EXIST);
       });
     });
@@ -299,14 +303,18 @@ export class ChatsService {
    * [description]
    * @param conditions
    * @param entityLike
+   * @param entityManager
    */
   public async update(
     conditions: FindOptionsWhere<ChatEntity>,
     entityLike: Partial<ChatEntity>,
+    entityManager?: EntityManager,
   ): Promise<number> {
-    return this.chatEntityRepository.manager.transaction(async () => {
-      return this.chatEntityRepository
-        .update(conditions, entityLike)
+    return this.chatEntityRepository.manager.transaction(async (chatEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : chatEntityManager;
+
+      return transactionalEntityManager
+        .update(ChatEntity, conditions, entityLike)
         .then((data) => data.affected)
         .catch(() => {
           throw new ConflictException(ErrorTypeEnum.CHAT_ALREADY_EXIST);
@@ -317,15 +325,17 @@ export class ChatsService {
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<ChatEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatEntity> {
-    return this.chatEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions, options);
-      return this.chatEntityRepository.remove(entity).catch(() => {
+    return this.chatEntityRepository.manager.transaction(async (chatEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : chatEntityManager;
+
+      const entity = await this.selectOne(conditions);
+      return transactionalEntityManager.remove(entity).catch(() => {
         throw new NotFoundException(ErrorTypeEnum.CHAT_NOT_FOUND);
       });
     });

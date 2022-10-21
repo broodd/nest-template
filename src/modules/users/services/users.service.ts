@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
 import {
   Repository,
-  SaveOptions,
-  RemoveOptions,
+  EntityManager,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -34,20 +33,23 @@ export class UsersService {
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<UserEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserEntity> {
-    return this.userEntityRepository.manager.transaction(async () => {
-      const entity = this.userEntityRepository.create(entityLike);
-      const { id } = await this.userEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.USER_ALREADY_EXIST);
-      });
+    const { id } = await this.userEntityRepository.manager.transaction(
+      async (userEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : userEntityManager;
 
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+        const entity = this.userEntityRepository.create(entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.USER_ALREADY_EXIST);
+        });
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
@@ -121,36 +123,41 @@ export class UsersService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<UserEntity>,
     entityLike: Partial<UserEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserEntity> {
-    return this.userEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.userEntityRepository.merge(mergeIntoEntity, entityLike);
-      const { id } = await this.userEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.USER_ALREADY_EXIST);
-      });
+    const { id } = await this.userEntityRepository.manager.transaction(
+      async (userEntityManager) => {
+        const transactionalEntityManager = entityManager ? entityManager : userEntityManager;
 
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.userEntityRepository.merge(mergeIntoEntity, entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.USER_ALREADY_EXIST);
+        });
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<UserEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<UserEntity> {
-    return this.userEntityRepository.manager.transaction(async () => {
+    return this.userEntityRepository.manager.transaction(async (userEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : userEntityManager;
+
       const entity = await this.selectOne(conditions);
-      return this.userEntityRepository.remove(entity, options).catch(() => {
+      return transactionalEntityManager.remove(entity).catch(() => {
         throw new NotFoundException(ErrorTypeEnum.USER_NOT_FOUND);
       });
     });

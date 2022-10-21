@@ -6,9 +6,8 @@ import { messaging } from 'firebase-admin';
 import {
   Repository,
   DeepPartial,
-  SaveOptions,
   UpdateResult,
-  RemoveOptions,
+  EntityManager,
   FindOneOptions,
   FindManyOptions,
   FindOptionsWhere,
@@ -37,35 +36,47 @@ export class NotificationsService {
   /**
    * [description]
    * @param entitiesLike
-   * @param options
+   * @param entityManager
    */
   public async createMany(
     entitiesLike: Partial<NotificationEntity>[],
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<NotificationEntity[]> {
-    return this.notificationEntityRepository.manager.transaction(async () => {
-      const entities = this.notificationEntityRepository.create(entitiesLike);
-      return this.notificationEntityRepository.save(entities, options).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.NOTIFICATIONS_ALREADY_EXIST);
-      });
-    });
+    return this.notificationEntityRepository.manager.transaction(
+      async (notificationEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : notificationEntityManager;
+
+        const entities = this.notificationEntityRepository.create(entitiesLike);
+        return transactionalEntityManager.save(entities).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.NOTIFICATIONS_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<NotificationEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<NotificationEntity> {
-    return this.notificationEntityRepository.manager.transaction(async () => {
-      const entity = this.notificationEntityRepository.create(entityLike);
-      return this.notificationEntityRepository.save(entity, options).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_ALREADY_EXIST);
-      });
-    });
+    return this.notificationEntityRepository.manager.transaction(
+      async (notificationEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : notificationEntityManager;
+
+        const entity = this.notificationEntityRepository.create(entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
@@ -135,54 +146,72 @@ export class NotificationsService {
    * [description]
    * @param conditions
    * @param entityLike
+   * @param entityManager
    */
   public async updateAll(
     conditions: FindOptionsWhere<NotificationEntity> = { status: NotificationsStatusEnum.UNREAD },
     entityLike: DeepPartial<NotificationEntity> = { status: NotificationsStatusEnum.READ },
+    entityManager?: EntityManager,
   ): Promise<UpdateResult> {
-    return this.notificationEntityRepository.manager.transaction((transactionalEntityManager) =>
-      transactionalEntityManager.update(NotificationEntity, conditions, entityLike).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.NOTIFICATIONS_NOT_FOUND);
-      }),
-    );
+    return this.notificationEntityRepository.manager.transaction((notificationEntityManager) => {
+      const transactionalEntityManager = entityManager ? entityManager : notificationEntityManager;
+
+      return transactionalEntityManager
+        .update(NotificationEntity, conditions, entityLike)
+        .catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.NOTIFICATIONS_NOT_FOUND);
+        });
+    });
   }
 
   /**
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<NotificationEntity>,
     entityLike: Partial<NotificationEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<NotificationEntity> {
-    return this.notificationEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.notificationEntityRepository.merge(mergeIntoEntity, entityLike);
-      const { id } = await this.notificationEntityRepository.save(entity, options).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_NOT_FOUND);
-      });
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+    const { id } = await this.notificationEntityRepository.manager.transaction(
+      async (notificationEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : notificationEntityManager;
+
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.notificationEntityRepository.merge(mergeIntoEntity, entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_NOT_FOUND);
+        });
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<NotificationEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<NotificationEntity> {
-    return this.notificationEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions);
-      return this.notificationEntityRepository.remove(entity, options).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_NOT_FOUND);
-      });
-    });
+    return this.notificationEntityRepository.manager.transaction(
+      async (notificationEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : notificationEntityManager;
+
+        const entity = await this.selectOne(conditions);
+        return transactionalEntityManager.remove(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.NOTIFICATION_NOT_FOUND);
+        });
+      },
+    );
   }
 
   /**

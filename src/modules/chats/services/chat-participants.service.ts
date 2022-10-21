@@ -7,8 +7,7 @@ import {
   FindOptionsWhere,
   FindManyOptions,
   FindOneOptions,
-  RemoveOptions,
-  SaveOptions,
+  EntityManager,
   Repository,
 } from 'typeorm';
 
@@ -34,23 +33,25 @@ export class ChatParticipantsService {
   /**
    * [description]
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async createOne(
     entityLike: Partial<ChatParticipantEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatParticipantEntity> {
-    return this.chatParticipantEntityRepository.manager.transaction(async () => {
-      const entity = this.chatParticipantEntityRepository.create(entityLike);
-      const { id } = await this.chatParticipantEntityRepository
-        .save(entity, options)
-        .catch((err) => {
-          console.log(err);
+    const { id } = await this.chatParticipantEntityRepository.manager.transaction(
+      async (chatParticipantEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : chatParticipantEntityManager;
+
+        const entity = this.chatParticipantEntityRepository.create(entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
           throw new ConflictException(ErrorTypeEnum.CHAT_PARTICIPANT_ALREADY_EXIST);
         });
-
-      return this.selectOne({ id }, { loadEagerRelations: true });
-    });
+      },
+    );
+    return this.selectOne({ id }, { loadEagerRelations: true });
   }
 
   /**
@@ -149,36 +150,48 @@ export class ChatParticipantsService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<ChatParticipantEntity>,
     entityLike: Partial<ChatParticipantEntity>,
-    options: SaveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatParticipantEntity> {
-    return this.chatParticipantEntityRepository.manager.transaction(async () => {
-      const mergeIntoEntity = await this.selectOne(conditions);
-      const entity = this.chatParticipantEntityRepository.merge(mergeIntoEntity, entityLike);
-      return this.chatParticipantEntityRepository.save(entity, options).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.CHAT_PARTICIPANT_ALREADY_EXIST);
-      });
-    });
+    return this.chatParticipantEntityRepository.manager.transaction(
+      async (chatParticipantEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : chatParticipantEntityManager;
+
+        const mergeIntoEntity = await this.selectOne(conditions);
+        const entity = this.chatParticipantEntityRepository.merge(mergeIntoEntity, entityLike);
+        return transactionalEntityManager.save(entity).catch(() => {
+          throw new ConflictException(ErrorTypeEnum.CHAT_PARTICIPANT_ALREADY_EXIST);
+        });
+      },
+    );
   }
 
   /**
    * [description]
    * @param conditions
-   * @param options
+   * @param entityManager
    */
   public async deleteOne(
     conditions: FindOptionsWhere<ChatParticipantEntity>,
-    options: RemoveOptions = { transaction: false },
+    entityManager?: EntityManager,
   ): Promise<ChatParticipantEntity> {
-    return this.chatParticipantEntityRepository.manager.transaction(async () => {
-      const entity = await this.selectOne(conditions, options);
-      return this.chatParticipantEntityRepository.remove(entity).catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANT_NOT_FOUND);
-      });
-    });
+    return this.chatParticipantEntityRepository.manager.transaction(
+      async (chatParticipantEntityManager) => {
+        const transactionalEntityManager = entityManager
+          ? entityManager
+          : chatParticipantEntityManager;
+
+        const entity = await this.selectOne(conditions);
+        return transactionalEntityManager.remove(entity).catch(() => {
+          throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANT_NOT_FOUND);
+        });
+      },
+    );
   }
 }
