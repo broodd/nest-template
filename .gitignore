@@ -36,12 +36,14 @@ lerna-debug.log*
 
 # Environment
 bpn.env
-.env.*
-!.env.example
-!.env.test
+.secrets
+# .env.*
+# !.env.example
+# !.env.test
 
 .eslintcache
 
+# Other
 /postgres_data
 /temp
 /static/*

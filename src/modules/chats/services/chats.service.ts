@@ -111,6 +111,7 @@ export class ChatsService {
    * [description]
    * @param data
    * @param user
+   * @param equal
    */
   public async selectOneStats(
     data: ChatEntity,

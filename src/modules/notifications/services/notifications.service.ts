@@ -1,7 +1,7 @@
+import { BaseMessage, Message, Notification } from 'firebase-admin/messaging';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { instanceToPlain } from 'class-transformer';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseMessage, Message, Notification } from 'firebase-admin/messaging';
 import { messaging } from 'firebase-admin';
 import {
   Repository,
