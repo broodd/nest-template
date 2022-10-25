@@ -1,7 +1,7 @@
 import { UseFilters, UsePipes } from '@nestjs/common';
 import { instanceToPlain } from 'class-transformer';
 import { Server } from 'socket.io';
-import { Not } from 'typeorm';
+import { Not, Raw } from 'typeorm';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -69,17 +69,17 @@ export class ChatsGateway {
   ): Promise<void> {
     await this.chatParticipantsService.selectOne({ user: { id: user.id }, chat: entityLike.chat });
 
-    const participantsIds = await this.chatParticipantsService.selectIds({
-      where: { chat: entityLike.chat },
-    });
-
     const message = await this.chatMessagesService.createOne({
       ...entityLike,
       owner: { id: user.id },
     });
-    const chat = await this.chatsService.selectOneEager(entityLike.chat, user);
 
+    const chat = await this.chatsService.selectOneEager(entityLike.chat, user);
+    const participantsIds = await this.chatParticipantsService.selectIds({
+      where: { chat: entityLike.chat },
+    });
     const socketsIds = this.socketsService.selectAllIds(participantsIds);
+
     this.server.to(socketsIds).emit(
       ChatSocketEventsEnum.CHAT_RECEIVE_MESSAGE,
       new ChatReceiveMessageDto({
@@ -100,8 +100,22 @@ export class ChatsGateway {
     @SocketUser() user: UserEntity,
   ): Promise<void> {
     await this.chatParticipantsService.selectOne({ user: { id: user.id }, chat: conditions.chat });
-    await this.chatMessagesService.updateOne(
-      { ...conditions, owner: { id: Not(user.id) } },
+
+    const message = await this.chatMessagesService.selectOne({
+      ...conditions,
+      owner: { id: Not(user.id) },
+    });
+    await this.chatMessagesService.updateAll(
+      {
+        chat: conditions.chat,
+        owner: { id: Not(user.id) },
+        status: ChatMessageStatusEnum.SENT,
+        createdAt: Raw(
+          (columnAlias) =>
+            `ROUND(EXTRACT(EPOCH FROM ${columnAlias})::NUMERIC, 3) * 1000 <= :createdAt`,
+          { createdAt: message.createdAt.getTime() },
+        ),
+      },
       { status: ChatMessageStatusEnum.READ },
     );
 

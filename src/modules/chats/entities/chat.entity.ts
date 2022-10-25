@@ -7,12 +7,14 @@ import {
   OneToMany,
   ManyToOne,
   Entity,
+  Column,
 } from 'typeorm';
 
 import { UserEntity } from 'src/modules/users/entities';
 
 import { ChatParticipantEntity } from './chat-participant.entity';
 import { ChatMessageEntity } from './chat-message.entity';
+import { ChatTypeEnum } from '../enums';
 
 /**
  * [description]
@@ -29,11 +31,9 @@ export class ChatEntity {
   /**
    * [description]
    */
-  @ApiHideProperty()
-  @OneToMany(() => ChatParticipantEntity, (participant) => participant.chat, {
-    cascade: true,
-  })
-  public readonly participants: Partial<ChatParticipantEntity>[];
+  @ApiProperty({ enum: ChatTypeEnum, nullable: false })
+  @Column({ type: 'enum', enum: ChatTypeEnum, nullable: false, default: ChatTypeEnum.PERSONAL })
+  public readonly type: ChatTypeEnum;
 
   /**
    * [description]
@@ -48,6 +48,15 @@ export class ChatEntity {
   @ApiHideProperty()
   @OneToMany(() => ChatMessageEntity, ({ chat }) => chat)
   public readonly messages: Partial<ChatMessageEntity>[];
+
+  /**
+   * [description]
+   */
+  @ApiHideProperty()
+  @OneToMany(() => ChatParticipantEntity, (participant) => participant.chat, {
+    cascade: true,
+  })
+  public readonly participants: Partial<ChatParticipantEntity>[];
 
   /**
    * [description]

@@ -114,7 +114,7 @@ export class ChatsController {
     @User() user: UserEntity,
   ): Promise<PaginationChatMessagesDto> {
     await this.chatParticipantsService.selectOne({ user: { id: user.id }, chat: chatConditions });
-    return this.chatMessagesService.selectAll(options, chatConditions, user);
+    return this.chatMessagesService.selectAll(options, chatConditions);
   }
 
   /**

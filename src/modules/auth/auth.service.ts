@@ -39,6 +39,8 @@ export class AuthService {
 
   /**
    * [description]
+   * @param userRefreshTokensService
+   * @param sendMailService
    * @param configService
    * @param usersService
    * @param jwtService
@@ -124,6 +126,7 @@ export class AuthService {
     const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
       owner: { id: user.id },
     });
+    this.userRefreshTokensService.deleteOldRefreshTokens({ owner: { id: user.id } });
     return this.generateTokens(user, refreshToken);
   }
 

@@ -107,12 +107,10 @@ export class ChatMessagesService {
    * [description]
    * @param options
    * @param chat
-   * @param user
    */
   public async selectAll(
     options: FindManyOptions<ChatMessageEntity> = { loadEagerRelations: false },
     chat: Partial<ChatEntity>,
-    user: Partial<UserEntity>,
   ): Promise<PaginationChatsDto> {
     const [rows, count] = await this.find(instanceToPlain(options))
       .andWhere({ chat })
@@ -120,15 +118,6 @@ export class ChatMessagesService {
       .catch(() => {
         throw new NotFoundException(ErrorTypeEnum.CHAT_MESSAGES_NOT_FOUND);
       });
-
-    await this.updateAll(
-      {
-        status: ChatMessageStatusEnum.SENT,
-        owner: { id: Not(user.id) },
-        chat: { id: chat.id },
-      },
-      { status: ChatMessageStatusEnum.READ },
-    );
 
     return new PaginationChatMessagesDto([rows.reverse(), count]);
   }

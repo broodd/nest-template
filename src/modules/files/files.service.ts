@@ -39,6 +39,7 @@ export class FilesService {
    * [description]
    * @param file
    * @param options
+   * @param entityManager
    */
   public async createOne(
     multipart: MultipartFile,

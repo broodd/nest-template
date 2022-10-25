@@ -24,6 +24,11 @@ import { UserRefreshTokenEntity } from '../entities';
 export class UserRefreshTokensService {
   /**
    * [description]
+   */
+  private readonly maxCountOfRefreshTokens = 10;
+
+  /**
+   * [description]
    * @param userRefreshTokenEntityRepository
    */
   constructor(
@@ -111,7 +116,7 @@ export class UserRefreshTokensService {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param options
+   * @param entityManager
    */
   public async updateOne(
     conditions: FindOptionsWhere<UserRefreshTokenEntity>,
@@ -154,5 +159,22 @@ export class UserRefreshTokensService {
         });
       },
     );
+  }
+
+  /**
+   * [description]
+   * @param conditions
+   */
+  public async deleteOldRefreshTokens(
+    conditions: FindOptionsWhere<UserRefreshTokenEntity>,
+  ): Promise<void> {
+    const tokens = await this.userRefreshTokenEntityRepository.find({
+      select: { id: true, createdAt: true },
+      where: conditions,
+      skip: this.maxCountOfRefreshTokens,
+      order: { createdAt: 'DESC' },
+    });
+    if (tokens.length)
+      await this.userRefreshTokenEntityRepository.delete(tokens.map((token) => token.id));
   }
 }

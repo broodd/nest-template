@@ -16,8 +16,8 @@ import { ErrorTypeEnum } from 'src/common/enums';
 
 import { UserEntity } from 'src/modules/users/entities';
 
+import { ChatMessageStatusEnum, ChatTypeEnum } from '../enums';
 import { PaginationChatsDto, SelectChatsDto } from '../dto';
-import { ChatMessageStatusEnum } from '../enums';
 import { ChatEntity } from '../entities';
 
 /**
@@ -169,11 +169,12 @@ export class ChatsService {
     /**
      * Join other user with cover
      */
-    qb.innerJoinAndMapOne(
+    qb.leftJoinAndMapOne(
       'ChatEntity.participant',
       'ChatEntity.participants',
       'ChatEntity_participant_other',
-      'ChatEntity_participant_other.userId != :userId',
+      'ChatEntity_participant_other.userId != :userId AND ChatEntity.type = :chatTypePersonal',
+      { chatTypePersonal: ChatTypeEnum.PERSONAL },
     )
       .innerJoinAndSelect('ChatEntity_participant_other.user', 'ChatEntity_participant_other_user')
       .leftJoinAndSelect(
@@ -218,6 +219,7 @@ export class ChatsService {
    * [description]
    *
    * @param conditions
+   * @param user
    * @param options
    */
   public async selectOneEager(
@@ -234,12 +236,12 @@ export class ChatsService {
         /**
          * Join owner user with cover
          */
-        .innerJoinAndMapOne(
+        .leftJoinAndMapOne(
           'ChatEntity.participant',
           'ChatEntity.participants',
           'ChatEntity_participant_owner',
-          'ChatEntity_participant_owner.userId = :userId',
-          { userId: user.id },
+          'ChatEntity_participant_owner.userId = :userId AND ChatEntity.type = :chatTypePersonal',
+          { userId: user.id, chatTypePersonal: ChatTypeEnum.PERSONAL },
         )
         .innerJoinAndSelect(
           'ChatEntity_participant_owner.user',

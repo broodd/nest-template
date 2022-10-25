@@ -68,14 +68,14 @@ describe('ChatMessagesService', () => {
 
   describe('selectAll', () => {
     it('should be returns pagination entity', async () => {
-      const received = await service.selectAll(new SelectChatMessagesDto(), chat, user);
+      const received = await service.selectAll(new SelectChatMessagesDto(), chat);
       expect(received.total).toEqual(expect.any(Number));
     });
 
     it('should be return not found exception', async () => {
       const options = plainToInstance(SelectChatMessagesDto, { page: -1 });
       const error = new NotFoundException(ErrorTypeEnum.CHAT_MESSAGES_NOT_FOUND);
-      return service.selectAll(options, chat, user).catch((err) => {
+      return service.selectAll(options, chat).catch((err) => {
         expect(err).toBeInstanceOf(NotFoundException);
         expect(err).toEqual(error);
       });
