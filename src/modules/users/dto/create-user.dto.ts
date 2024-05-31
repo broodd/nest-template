@@ -1,7 +1,16 @@
-import { IsEmail, IsOptional, MaxLength, MinLength, ValidateNested } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import {
+  ValidateNested,
+  IsOptional,
+  IsDefined,
+  MaxLength,
+  MinLength,
+  IsEmail,
+  Matches,
+} from 'class-validator';
 
+import { AUTH_PASSWORD_REGEX } from 'src/modules/auth/auth.constants';
 import { ID } from 'src/common/dto';
 
 /**
@@ -12,23 +21,33 @@ export class CreateUserDto {
    * [description]
    */
   @IsEmail()
-  @ApiProperty({ example: 'admin@gmail.com', maxLength: 320 })
+  @MaxLength(50)
+  @ApiProperty({ example: 'admin@gmail.com', maxLength: 50 })
   public readonly email: string;
 
   /**
    * [description]
    */
-  @MinLength(8)
-  @MaxLength(64)
-  @ApiProperty({ minLength: 8, maxLength: 64, example: 'password' })
+  @IsOptional()
+  @MinLength(3)
+  @MaxLength(128)
+  @ApiProperty({ minLength: 2, maxLength: 128 })
+  public readonly name?: string;
+
+  /**
+   * [description]
+   */
+  @IsDefined()
+  @Matches(AUTH_PASSWORD_REGEX)
+  @ApiProperty({ minLength: 8, maxLength: 64, example: 'Password1' })
   public readonly password: string;
 
   /**
    * [description]
    */
   @IsOptional()
-  @ValidateNested()
   @Type(() => ID)
+  @ValidateNested()
   @ApiProperty({ type: () => ID })
   public readonly cover?: ID;
 }

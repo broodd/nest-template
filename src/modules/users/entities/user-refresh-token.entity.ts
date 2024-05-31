@@ -1,28 +1,15 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-
-import { UserEntity } from './user.entity';
+import { Entity, Column, ManyToOne } from 'typeorm';
+import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+
+import { CommonEntity } from 'src/common/entities';
+import { UserEntity } from './user.entity';
 
 /**
  * [description]
  */
 @Entity('user_refresh_tokens')
-export class UserRefreshTokenEntity {
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
+export class UserRefreshTokenEntity extends CommonEntity {
   /**
    * [description]
    */
@@ -39,24 +26,4 @@ export class UserRefreshTokenEntity {
     onDelete: 'CASCADE',
   })
   public readonly owner: Partial<UserEntity>;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
 }

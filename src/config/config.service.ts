@@ -1,6 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
-import { join } from 'path';
+import { join } from 'node:path';
 
 import { ConfigMode } from './interfaces/config.interface';
 
@@ -9,6 +10,11 @@ import { ConfigMode } from './interfaces/config.interface';
  */
 @Injectable()
 export class ConfigService {
+  /**
+   * Prefix
+   */
+  private readonly envFilePostfix = '_FILE';
+
   /**
    * Configuration service constructor
    * DotEnv config
@@ -44,7 +50,11 @@ export class ConfigService {
    * @return     Returns the generated type limited the function types JSON.parse()
    */
   public get<T = NodeJS.ProcessEnv>(key: string): T {
-    const variable = process.env[key];
+    let variable = process.env[key];
+    if (!variable) {
+      const path = process.env[key + this.envFilePostfix];
+      variable = existsSync(path) ? readFileSync(path, 'utf8') : null;
+    }
     if (!variable) throw TypeError(`The ${key} cannot be undefined`);
     try {
       return JSON.parse(variable);

@@ -17,28 +17,13 @@ export class SelectFilesDto extends FindManyOptionsDto<FileEntity> {
   @MinLength(1)
   @MaxLength(256)
   @ApiProperty({ example: 'example.md' })
-  public readonly title?: string;
+  public readonly filename?: string;
 
   /**
    * [description]
    */
-  public get where(): FindOneOptions<FileEntity>['where'] {
-    const { title } = this;
-    return Object.assign(
-      {},
-      title && {
-        title: ILike(`%${title}%`),
-      },
-    );
+  public get whereBrackets(): FindOneOptions['where'] {
+    const { filename } = this;
+    return Object.assign({}, filename && { filename: ILike(`%${filename}%`) });
   }
-
-  /**
-   * [description]
-   */
-  /* public get whereBrackets(): Brackets {
-    const { title } = this;
-    return new Brackets((qb) => {
-      if (title) qb.andWhere({ title: ILike(`%${title}%`) });
-    });
-  } */
 }

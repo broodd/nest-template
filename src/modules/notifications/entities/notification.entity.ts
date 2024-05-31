@@ -1,27 +1,16 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import {
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  JoinColumn,
-  ManyToOne,
-  Entity,
-  Column,
-} from 'typeorm';
+import { JoinColumn, ManyToOne, Entity, Column } from 'typeorm';
 
 import { UserEntity } from 'src/modules/users/entities';
 
 import { NotificationsStatusEnum, NotificationsTypeEnum } from '../enums';
+import { CommonEntity } from 'src/common/entities';
 
+/**
+ * [description]
+ */
 @Entity('notifications')
-export class NotificationEntity {
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
+export class NotificationEntity extends CommonEntity {
   /**
    * [description]
    */
@@ -39,6 +28,20 @@ export class NotificationEntity {
   /**
    * [description]
    */
+  @ApiProperty({ maxLength: 256 })
+  @Column({ type: 'varchar', length: 256 })
+  public readonly title: string;
+
+  /*
+   * [description]
+   */
+  @ApiProperty()
+  @Column({ type: 'uuid', nullable: false })
+  public readonly ownerId: string;
+
+  /**
+   * [description]
+   */
   @JoinColumn()
   @ApiHideProperty()
   @ManyToOne(() => UserEntity, {
@@ -46,34 +49,4 @@ export class NotificationEntity {
     nullable: false,
   })
   public readonly owner: Partial<UserEntity>;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ maxLength: 256 })
-  @Column({ type: 'varchar', length: 256 })
-  public readonly title: string;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    readonly: true,
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    readonly: true,
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
 }

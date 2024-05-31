@@ -1,14 +1,18 @@
-import { FindOptionsOrder, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 
-export const setFindOrder = <T>(
+/**
+ * Helper for add order by custom property which starts with '__'
+ * Custom property not contain in entity, so must order this way because in method qb.order() it's not working
+ * @param qb
+ * @param order
+ * @param value
+ */
+export const setQueryOrder = <T>(
   qb: SelectQueryBuilder<T>,
-  order: FindOptionsOrder<T>,
-): FindOptionsOrder<T> => {
-  Object.entries(order)
-    .filter(([key]) => key.startsWith('__'))
-    .forEach(([key, value]: [string, 'ASC' | 'DESC']) => qb.addOrderBy(key, value, 'NULLS LAST'));
-
-  return Object.keys(order)
-    .filter((key) => !key.startsWith('__'))
-    .reduce((acc, key) => ((acc[key] = order[key]), acc), {});
+  order: string[],
+  value: 'ASC' | 'DESC',
+): void => {
+  order
+    ?.filter((key) => key.startsWith('__'))
+    .forEach((key) => qb.addOrderBy(key, value, 'NULLS LAST'));
 };

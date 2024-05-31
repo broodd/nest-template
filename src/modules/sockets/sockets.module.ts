@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 
 import { ConfigService } from 'src/config';
 
-import { SocketsService } from './sockets.service';
-import { SocketsGateway } from './sockets.gateway';
+import { SocketsService } from './services/sockets.service';
+import { SocketsGateway } from './services/sockets.gateway';
 import { UsersModule } from '../users';
 
 /**

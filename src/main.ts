@@ -34,13 +34,6 @@ async function bootstrap() {
     origin: configService.get('CORS_ORIGIN'),
   });
 
-  initializeApp({
-    credential: credential.cert({
-      clientEmail: configService.get('FIREBASE_CLIENT_EMAIL'),
-      projectId: configService.get('FIREBASE_PROJECT_ID'),
-      privateKey: configService.get<string>('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n'),
-    }),
-  });
 
   if (configService.getMode(ConfigMode.production)) app.enableShutdownHooks();
   if (configService.get('SWAGGER_MODULE')) {

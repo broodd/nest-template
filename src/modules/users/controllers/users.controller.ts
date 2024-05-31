@@ -1,16 +1,17 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
-  Get,
-  Post,
-  Body,
+  ClassSerializerInterceptor,
+  UseInterceptors,
+  Controller,
+  UseGuards,
+  Headers,
+  Delete,
   Param,
   Patch,
   Query,
-  Delete,
-  UseGuards,
-  Controller,
-  UseInterceptors,
-  ClassSerializerInterceptor,
+  Post,
+  Body,
+  Get,
 } from '@nestjs/common';
 
 import { UseRole } from 'src/common/decorators';
@@ -24,9 +25,9 @@ import { UserRoleEnum } from '../enums';
 import {
   PaginationUsersDto,
   SelectUsersDto,
-  CreateUserDto,
   SelectUserDto,
   UpdateUserDto,
+  CreateUserDto,
 } from '../dto';
 
 /**
@@ -49,7 +50,7 @@ export class UsersController {
    * @param data
    */
   @Post()
-  @UseRole(UserRoleEnum.ADMIN)
+  @UseRole(UserRoleEnum.SUPER_ADMIN)
   public async createOne(@Body() data: CreateUserDto): Promise<UserEntity> {
     return this.usersService.createOne(data);
   }
@@ -59,9 +60,9 @@ export class UsersController {
    * @param options
    */
   @Get()
-  @UseRole(UserRoleEnum.ADMIN)
-  public async selectAll(@Query() options: SelectUsersDto): Promise<PaginationUsersDto> {
-    return this.usersService.selectAll(options);
+  @UseRole(UserRoleEnum.SUPER_ADMIN)
+  public async selectManyAndCount(@Query() options: SelectUsersDto): Promise<PaginationUsersDto> {
+    return this.usersService.selectManyAndCount(options);
   }
 
   /**
@@ -83,7 +84,7 @@ export class UsersController {
    * @param data
    */
   @Patch(':id')
-  @UseRole(UserRoleEnum.ADMIN)
+  @UseRole(UserRoleEnum.SUPER_ADMIN)
   public async updateOne(
     @Param() conditions: ID,
     @Body() data: UpdateUserDto,
@@ -96,7 +97,7 @@ export class UsersController {
    * @param conditions
    */
   @Delete(':id')
-  @UseRole(UserRoleEnum.ADMIN)
+  @UseRole(UserRoleEnum.SUPER_ADMIN)
   public async deleteOne(@Param() conditions: ID): Promise<UserEntity> {
     return this.usersService.deleteOne(conditions);
   }

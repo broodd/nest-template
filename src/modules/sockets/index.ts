@@ -1,3 +1,3 @@
-export * from './sockets.service';
-export * from './sockets.gateway';
+export * from './services/sockets.service';
+export * from './services/sockets.gateway';
 export * from './sockets.module';

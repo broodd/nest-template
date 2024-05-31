@@ -1,11 +1,14 @@
-import { FastifyMultipartOptions } from '@fastify/Multipart';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Type } from '@nestjs/common';
+
+import { S3ClientConfig } from '@aws-sdk/client-s3';
 
 /**
  * [description]
  */
-export type MultipartModuleOptions = FastifyMultipartOptions;
+export interface MultipartModuleOptions extends S3ClientConfig {
+  readonly bucket?: string;
+}
 
 /**
  * [description]

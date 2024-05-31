@@ -3,13 +3,22 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { NotificationsTypeEnum } from '../enums';
 
+/**
+ * [description]
+ */
 export class CreateNotificationDto {
+  /**
+   * [description]
+   */
   @MinLength(1)
   @MaxLength(256)
   @ApiProperty()
   public readonly title: string;
 
-  @IsEnum(NotificationsTypeEnum)
+  /**
+   * [description]
+   */
   @ApiProperty()
+  @IsEnum(NotificationsTypeEnum)
   public readonly type: NotificationsTypeEnum;
 }

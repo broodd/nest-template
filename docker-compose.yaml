@@ -1,19 +1,22 @@
 version: '3.5'
 services:
   postgres:
-    image: postgres:13-alpine
+    image: postgres:14-alpine
     ports:
       - '5432:5432'
     networks:
       - network
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - 'postgres_data:/var/lib/postgresql/data'
+    environment:
+      POSTGRES_DB: nest-template
+      POSTGRES_USER_FILE: /run/secrets/postgres-user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    secrets:
+      - postgres-user
+      - postgres-password
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U nest-template']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,3 +48,29 @@ networks:
 
 volumes:
   postgres_data:
+
+secrets:
+  postgres-user:
+    file: ./.secrets/postgres-user
+  postgres-password:
+    file: ./.secrets/postgres-password
+  smtp-client-id:
+    file: ./.secrets/smtp-client-id
+  smtp-client-secret:
+    file: ./.secrets/smtp-client-secret
+  smtp-from:
+    file: ./.secrets/smtp-from
+  smtp-refresh-token:
+    file: ./.secrets/smtp-refresh-token
+  smtp-user:
+    file: ./.secrets/smtp-user
+  jwt-secret-access-token:
+    file: ./.secrets/jwt-secret-access-token
+  jwt-secret-refresh-token:
+    file: ./.secrets/jwt-secret-refresh-token
+  firebase-client-email:
+    file: ./.secrets/firebase-client-email
+  firebase-project-id:
+    file: ./.secrets/firebase-project-id
+  firebase-private-key:
+    file: ./.secrets/firebase-private-key

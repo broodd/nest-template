@@ -1,6 +1,5 @@
-import { FileEntity, FileEntityPreview } from 'src/modules/files/entities';
+import { FileEntity } from 'src/modules/files/entities';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import { hash } from 'src/common/helpers';
 import {
   Column,
@@ -10,28 +9,18 @@ import {
   JoinColumn,
   BeforeInsert,
   BeforeUpdate,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { UserNotificationTokenEntity } from './user-notification-token.entity';
 import { UserRefreshTokenEntity } from './user-refresh-token.entity';
 import { UserRoleEnum, UserStatusEnum } from '../enums';
+import { CommonEntity } from 'src/common/entities';
 
 /**
  * [description]
  */
 @Entity('users')
-export class UserEntity {
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
+export class UserEntity extends CommonEntity {
   /**
    * [description]
    */
@@ -42,9 +31,16 @@ export class UserEntity {
   /**
    * [description]
    */
-  @ApiProperty({ enum: UserRoleEnum, default: UserRoleEnum.USER })
-  @Column({ type: 'enum', enum: UserRoleEnum, default: UserRoleEnum.USER })
+  @ApiProperty({ enum: UserRoleEnum, default: UserRoleEnum.ADMIN })
+  @Column({ type: 'enum', enum: UserRoleEnum, default: UserRoleEnum.ADMIN })
   public readonly role: UserRoleEnum;
+
+  /**
+   * [description]
+   */
+  @ApiProperty({ maxLength: 128 })
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  public readonly name: string;
 
   /**
    * [description]
@@ -74,8 +70,7 @@ export class UserEntity {
    * [description]
    */
   @JoinColumn()
-  @ApiProperty({ type: () => FileEntityPreview })
-  @Transform(({ value }) => value && new FileEntityPreview(value))
+  @ApiProperty({ type: () => FileEntity })
   @ManyToOne(() => FileEntity, {
     onDelete: 'SET NULL',
     nullable: true,
@@ -97,31 +92,4 @@ export class UserEntity {
   @ApiHideProperty()
   @OneToMany(() => UserNotificationTokenEntity, ({ owner }) => owner)
   public readonly notificationTokens: UserNotificationTokenEntity[];
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @DeleteDateColumn()
-  public readonly deletedAt: Date;
 }

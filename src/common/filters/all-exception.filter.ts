@@ -11,6 +11,8 @@ import { FastifyReply } from 'fastify';
 
 import { ErrorTypeEnum } from '../enums';
 
+const NODE_ENV = process.env.NODE_ENV;
+
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(AllExceptionFilter.name);
@@ -31,19 +33,21 @@ export class AllExceptionFilter implements ExceptionFilter {
             error: ErrorTypeEnum.INTERNAL_SERVER_ERROR,
           };
 
-    this.logger.error(
-      {
-        url: new URL(request.url, 'logger://').pathname,
-        method: request.method,
-        params: request.params,
-        query: request.query,
-        body: request.body,
-        user: request.user,
-        statusCode,
-        message,
-      },
-      exception.stack,
-    );
+    if (NODE_ENV != 'test') {
+      this.logger.error(
+        {
+          url: new URL(request.url, 'logger://').pathname,
+          method: request.method,
+          params: request.params,
+          query: request.query,
+          body: request.body,
+          user: request.user,
+          statusCode,
+          message,
+        },
+        exception.stack,
+      );
+    }
 
     return response.status(statusCode).send({ error, statusCode, message: [].concat(message) });
   }

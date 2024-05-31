@@ -1,7 +1,7 @@
-import { IsArray, IsString, IsNotEmpty, IsOptional, Min, Max } from 'class-validator';
-import { Expose, Transform } from 'class-transformer';
+import { IsArray, IsString, IsNotEmpty, IsOptional, Min, Max, MaxLength } from 'class-validator';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { FindManyOptions } from 'typeorm';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { dotNotation } from 'src/common/helpers';
@@ -22,6 +22,7 @@ export class FindManyOptionsDto<Entity>
   @IsOptional()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @MaxLength(64, { each: true })
   @Transform(({ value }) => [].concat(value))
   @ApiProperty({
     type: [String],
@@ -36,6 +37,7 @@ export class FindManyOptionsDto<Entity>
   @IsOptional()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @MaxLength(64, { each: true })
   @Transform(({ value }) => [].concat(value))
   @ApiProperty({
     type: [String],
@@ -51,16 +53,25 @@ export class FindManyOptionsDto<Entity>
   public get order(): FindManyOptions['order'] {
     return Object.assign(
       {},
-      this.asc && dotNotation(this.asc, 'ASC'),
-      this.desc && dotNotation(this.desc, 'DESC'),
+      this.asc &&
+        dotNotation(
+          this.asc.filter((key) => !key.startsWith('__')),
+          'ASC',
+        ),
+      this.desc &&
+        dotNotation(
+          this.desc.filter((key) => !key.startsWith('__')),
+          'DESC',
+        ),
     );
   }
 
   /**
    * Offset (paginated) where from entities should be taken
    */
-  @IsOptional()
   @Min(1)
+  @IsOptional()
+  @Exclude({ toPlainOnly: true })
   @ApiProperty({
     type: String,
     example: 1,
@@ -71,22 +82,30 @@ export class FindManyOptionsDto<Entity>
   /**
    * Limit (paginated) - max number of entities should be taken
    */
-  @IsOptional()
   @Min(1)
   @Max(100)
+  @IsOptional()
+  @Exclude({ toPlainOnly: true })
   @ApiProperty({
     type: String,
     example: 5,
     default: 50,
     description: 'Limit (paginated) - max number of entities should be taken',
   })
-  public readonly take?: number = 50;
+  public take?: number = 50;
 
   /**
    * Getter to form an object of skip. Available after calling instanceToPlain
    */
   @Expose({ toPlainOnly: true })
   public get skip(): number {
-    return this.take * (this.page - 1);
+    return (this.take || 0) * (this.page - 1);
+  }
+
+  /**
+   * Dto conditions
+   */
+  public get whereBrackets(): FindOneOptions['where'] {
+    return {};
   }
 }

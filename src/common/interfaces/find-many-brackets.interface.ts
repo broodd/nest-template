@@ -1,4 +1,4 @@
-import { Brackets, FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 
 /**
  * [description]
@@ -7,5 +7,5 @@ export interface FindManyBracketsOptions<Entity = any> extends FindManyOptions<E
   /**
    * [description]
    */
-  whereBrackets?: Brackets;
+  whereBrackets?: FindOneOptions['where'];
 }

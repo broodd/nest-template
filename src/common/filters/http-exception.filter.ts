@@ -14,6 +14,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<FastifyReply>();
     const statusCode = exception.getStatus();
     const { message, error } = exception.getResponse() as Record<string, any>;
-    return response.status(statusCode).send({ error, statusCode, message: [].concat(message) });
+    return response.status(statusCode).send({ statusCode, message: [].concat(message), error });
   }
 }

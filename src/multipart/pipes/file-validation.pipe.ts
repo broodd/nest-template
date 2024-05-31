@@ -1,8 +1,14 @@
-import { Injectable, PipeTransform, UnsupportedMediaTypeException } from '@nestjs/common';
-import { MultipartFile } from '@fastify/multipart';
+import {
+  UnsupportedMediaTypeException,
+  PayloadTooLargeException,
+  PipeTransform,
+  Injectable,
+} from '@nestjs/common';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { ConfigService } from 'src/config';
+
+import { MultipartBodyFile } from '../interfaces';
 
 /**
  * [description]
@@ -26,9 +32,15 @@ export class FileValidationPipe implements PipeTransform {
    * [description]
    * @param value
    */
-  transform(value: MultipartFile) {
-    if (!this.allowedTypes.includes(value.mimetype))
-      throw new UnsupportedMediaTypeException(ErrorTypeEnum.FILE_UNSUPPORTED_TYPE);
+  transform(value: { file: MultipartBodyFile & { limit?: boolean } }) {
+    const file = value?.file;
+
+    if (file) {
+      if (file.limit) throw new PayloadTooLargeException(ErrorTypeEnum.FILE_TOO_LARGE);
+      if (!this.allowedTypes.includes(file.mimetype))
+        throw new UnsupportedMediaTypeException(ErrorTypeEnum.FILE_UNSUPPORTED_TYPE);
+    }
+
     return value;
   }
 }

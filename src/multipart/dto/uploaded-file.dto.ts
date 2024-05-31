@@ -13,7 +13,12 @@ export class UploadedFile {
   /**
    * [description]
    */
-  public readonly title: string;
+  public readonly data: any;
+
+  /**
+   * [description]
+   */
+  public readonly key: string;
 
   /**
    * [description]

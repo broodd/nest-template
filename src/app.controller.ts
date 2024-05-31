@@ -21,12 +21,6 @@ import { ConfigService } from './config';
 export class AppController {
   /**
    * [description]
-   * @private
-   */
-  private readonly path = this.configService.getDest('STORE_DEST');
-
-  /**
-   * [description]
    * @param configService
    * @param typeorm
    * @param memory
@@ -49,7 +43,6 @@ export class AppController {
   @HealthCheck()
   public status(): Promise<HealthCheckResult> {
     return this.health.check([
-      () => this.disk.checkStorage('disk', { path: this.path, thresholdPercent: 1 }),
       () => this.memory.checkHeap('memory_heap', 2 ** 31),
       () => this.memory.checkRSS('memory_rss', 2 ** 31),
       () => this.typeorm.pingCheck('database'),

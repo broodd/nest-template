@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { SocketsModule } from '../sockets';
 
 import { ChatEntity, ChatMessageEntity, ChatParticipantEntity } from './entities';
-import { ChatsController } from './chats.controller';
+import { ChatsController } from './controllers';
 import {
   ChatParticipantsService,
   ChatMessagesService,

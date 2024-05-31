@@ -7,15 +7,6 @@ describe('FindOneOptionsDto', () => {
     expect(new FindOneOptionsDto()).toBeDefined();
   });
 
-  describe('select', () => {
-    it('should be return array select fields', () => {
-      const plain = { selection: ['id'] };
-      const classDto = plainToInstance(FindOneOptionsDto, plain);
-      const instanceDto = instanceToPlain(classDto);
-      expect(instanceDto).toMatchObject(plain);
-    });
-  });
-
   describe('relations', () => {
     it('should be return array relation fields', () => {
       const plain = { eager: true };

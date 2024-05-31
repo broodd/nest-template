@@ -7,7 +7,7 @@ import { UserRoleEnum } from 'src/modules/users/enums';
 import { UseRole } from './roles.decorator';
 
 describe('UseRole', () => {
-  const decorator = UseRole(UserRoleEnum.USER);
+  const decorator = UseRole(UserRoleEnum.SUPER_ADMIN);
 
   it('should be defined', () => {
     expect(decorator).toBeDefined();
@@ -16,7 +16,7 @@ describe('UseRole', () => {
   it('should be return custom summary into swagger/apiOperation metadata', async () => {
     @Controller()
     class TestController {
-      @UseRole(UserRoleEnum.USER)
+      @UseRole(UserRoleEnum.SUPER_ADMIN)
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       public foo(): void {}
     }
@@ -29,16 +29,16 @@ describe('UseRole', () => {
     const received = module.get<TestController>(TestController).foo;
 
     expect(Reflect.getMetadataKeys(received)).toEqual([operation, roles, security]);
-    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.USER]);
+    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.SUPER_ADMIN]);
     expect(Reflect.getMetadata(operation, received)).toEqual({
-      summary: `[ROLE: ${UserRoleEnum.USER}]`,
+      summary: `[ROLE: ${UserRoleEnum.SUPER_ADMIN}]`,
     });
   });
 
   it('should be return modify summary into swagger/apiOperation metadata', async () => {
     @Controller()
     class TestController {
-      @UseRole(UserRoleEnum.USER)
+      @UseRole(UserRoleEnum.SUPER_ADMIN)
       @ApiOperation({ summary: 'Test' })
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       public foo(): void {}
@@ -52,16 +52,16 @@ describe('UseRole', () => {
     const received = module.get<TestController>(TestController).foo;
 
     expect(Reflect.getMetadataKeys(received)).toEqual([operation, roles, security]);
-    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.USER]);
+    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.SUPER_ADMIN]);
     expect(Reflect.getMetadata(operation, received)).toEqual({
-      summary: `[ROLE: ${UserRoleEnum.USER}]: Test`,
+      summary: `[ROLE: ${UserRoleEnum.SUPER_ADMIN}]: Test`,
     });
   });
 
   it('should be return merge options into swagger/apiOperation metadata', async () => {
     @Controller()
     class TestController {
-      @UseRole(UserRoleEnum.USER)
+      @UseRole(UserRoleEnum.SUPER_ADMIN)
       @ApiOperation({ deprecated: true })
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       public foo(): void {}
@@ -75,9 +75,9 @@ describe('UseRole', () => {
     const received = module.get<TestController>(TestController).foo;
 
     expect(Reflect.getMetadataKeys(received)).toEqual([operation, roles, security]);
-    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.USER]);
+    expect(Reflect.getMetadata(roles, received)).toEqual([UserRoleEnum.SUPER_ADMIN]);
     expect(Reflect.getMetadata(operation, received)).toEqual({
-      summary: `[ROLE: ${UserRoleEnum.USER}]`,
+      summary: `[ROLE: ${UserRoleEnum.SUPER_ADMIN}]`,
       deprecated: true,
     });
   });

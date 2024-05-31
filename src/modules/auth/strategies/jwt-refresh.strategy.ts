@@ -9,7 +9,7 @@ import { ConfigService } from 'src/config';
 import { UserEntity } from '../../users/entities';
 
 import { JwtRefreshTokenPayloadDto } from '../dto';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * [description]

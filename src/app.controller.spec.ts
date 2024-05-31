@@ -28,7 +28,6 @@ describe('AppController', () => {
       expect(received).toStrictEqual({
         status: 'ok',
         info: {
-          disk: { status: 'up' },
           memory_heap: { status: 'up' },
           memory_rss: { status: 'up' },
           database: { status: 'up' },
@@ -36,7 +35,6 @@ describe('AppController', () => {
         },
         error: {},
         details: {
-          disk: { status: 'up' },
           memory_heap: { status: 'up' },
           memory_rss: { status: 'up' },
           database: { status: 'up' },

@@ -1,16 +1,16 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
-  Get,
-  Post,
-  Body,
+  ClassSerializerInterceptor,
+  UseInterceptors,
+  Controller,
+  UseGuards,
+  Delete,
   Param,
   Patch,
   Query,
-  Delete,
-  UseGuards,
-  Controller,
-  UseInterceptors,
-  ClassSerializerInterceptor,
+  Post,
+  Body,
+  Get,
 } from '@nestjs/common';
 
 import { User } from 'src/common/decorators';
@@ -27,7 +27,7 @@ import {
   SelectUserNotificationTokenDto,
   UpdateUserNotificationTokenDto,
   DeleteUserNotificationTokenDto,
-} from '../dto';
+} from '../dto/user-notification-tokens';
 
 /**
  * [description]
@@ -61,10 +61,10 @@ export class UserNotificationTokensController {
    * @param options
    */
   @Get()
-  public async selectAll(
+  public async selectManyAndCount(
     @Query() options: SelectUserNotificationTokensDto,
   ): Promise<PaginationUserNotificationTokensDto> {
-    return this.userNotificationTokensService.selectAll(options);
+    return this.userNotificationTokensService.selectManyAndCount(options);
   }
 
   /**

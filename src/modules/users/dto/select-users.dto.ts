@@ -1,19 +1,39 @@
+import { IsEnum, IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { Brackets, FindOneOptions, ILike } from 'typeorm';
+import { Transform } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+
 import { FindManyOptionsDto } from 'src/common/dto';
-import { FindOneOptions } from 'typeorm';
 
 import { UserEntity } from '../entities';
-import { UserStatusEnum } from '../enums';
 
 /**
  * [description]
  */
 export class SelectUsersDto extends FindManyOptionsDto<UserEntity> {
+
   /**
    * [description]
    */
-  public get where(): FindOneOptions<UserEntity>['where'] {
-    return {
-      status: UserStatusEnum.ACTIVATED,
-    };
+  @IsOptional()
+  @MinLength(1)
+  @ApiProperty()
+  @MaxLength(256)
+  public readonly search?: string;
+
+  /**
+   * [description]
+   */
+  public get whereBrackets(): FindOneOptions['where'] {
+    const {  search } =
+      this;
+
+    return new Brackets((qb) => {
+
+      if (search) {
+        const like = ILike(`%${search.trim()}%`);
+        qb.andWhere([{ name: like }, { surname: like }, { email: like }]);
+      }
+    });
   }
 }

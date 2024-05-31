@@ -1,8 +1,8 @@
 import { IsArray, IsString, IsNotEmpty, IsOptional, IsBooleanString } from 'class-validator';
+import { dotNotation } from 'src/common/helpers/transform.helper';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { FindOneOptions, FindOptionsSelect } from 'typeorm';
-import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { dotNotation } from 'src/common/helpers';
 
 /**
  * [description]
@@ -15,6 +15,7 @@ export class FindOneOptionsDto<Entity> implements FindOneOptions {
   @IsOptional()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @Exclude({ toPlainOnly: true })
   @Transform(({ value }) => [].concat(value))
   @ApiProperty({
     type: [String],
@@ -40,7 +41,7 @@ export class FindOneOptionsDto<Entity> implements FindOneOptions {
     type: 'boolean',
     description: 'Indicates what relations of entity should be loaded',
   })
-  public readonly eager?: string;
+  public eager?: string;
 
   /**
    * Getter to form an property of loadEagerRelations. Available after calling instanceToPlain

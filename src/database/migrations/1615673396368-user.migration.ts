@@ -4,12 +4,12 @@ import { UserEntity } from 'src/modules/users/entities';
 import { UserRoleEnum } from 'src/modules/users/enums';
 
 const password =
-  '357fa5484137ddfd5a5b:32e0569e0c7e1ac0fd902a3db866904098e08cf1e1a1e8cd7fa8e5941b7f7c46866a9d577ece5778a32ce4b2c812e547607d111da263d51d63f9ba5135a3a421'; // password
+  'c311eb49ab82ba9c111a:fe845cd4d04feb3ac89b7e218bc785eb3edab59681002194a5ded3eacbb3d34f0c59418932095c774aa8278f6f131d505908bce2c02882e082628e9d78ea8e8a'; // Password1
 const data: Partial<UserEntity>[] = [
   {
     id: '067f2f3e-b936-4029-93d6-b2f58ae4f489',
     email: 'admin@gmail.com',
-    role: UserRoleEnum.ADMIN,
+    role: UserRoleEnum.SUPER_ADMIN,
     password,
   },
 ];
