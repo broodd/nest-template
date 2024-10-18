@@ -3,8 +3,7 @@ import { Module } from '@nestjs/common';
 
 import { UserNotificationTokensService, UserRefreshTokensService, UsersService } from './services';
 import { UserEntity, UserNotificationTokenEntity, UserRefreshTokenEntity } from './entities';
-import { UsersController } from './controllers';
-import { SendMailModule } from 'src/sendmail';
+import { UsersController, UserNotificationTokensController } from './controllers';
 
 /**
  * [description]
@@ -12,9 +11,8 @@ import { SendMailModule } from 'src/sendmail';
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity, UserRefreshTokenEntity, UserNotificationTokenEntity]),
-    SendMailModule,
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, UserNotificationTokensController],
   providers: [UsersService, UserRefreshTokensService, UserNotificationTokensService],
   exports: [UsersService, UserRefreshTokensService, UserNotificationTokensService],
 })

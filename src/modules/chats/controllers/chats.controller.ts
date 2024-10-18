@@ -12,26 +12,21 @@ import {
   Get,
 } from '@nestjs/common';
 
-import { User, UseRole } from 'src/common/decorators';
-import { JwtAuthGuard } from '../../auth/guards';
-import { ID } from '../../../common/dto';
+import { User } from 'src/common/decorators';
+import { ID } from 'src/common/dto';
 
-import { UserEntity } from '../../users/entities';
+import { JwtAuthGuard } from 'src/modules/auth/guards';
+import { UserEntity } from 'src/modules/users/entities';
 
-import { ChatMessagesService, ChatParticipantsService, ChatsService } from '../services';
+import { PaginationChatsDto, SelectChatsDto, CreateChatDto } from '../dto';
+import { ChatParticipantsService, ChatsService } from '../services';
 import { ChatEntity } from '../entities';
 import {
   ChatReadMessageResponseDto,
-  PaginationChatMessagesDto,
-  SelectChatMessagesDto,
   ChatReceiveMessageDto,
   CreateChatMessageDto,
-  PaginationChatsDto,
   ChatReadMessageDto,
-  SelectChatsDto,
-  CreateChatDto,
-} from '../dto';
-import { UserRoleEnum } from '../../users/enums';
+} from '../dto/chat-messages';
 
 /**
  * [description]
@@ -51,30 +46,28 @@ export class ChatsController {
   /**
    * [description]
    * @param chatsService
-   * @param chatMessagesService
    * @param chatParticipantsService
    */
   constructor(
     private readonly chatsService: ChatsService,
-    private readonly chatMessagesService: ChatMessagesService,
     private readonly chatParticipantsService: ChatParticipantsService,
   ) {}
 
   /**
    * [description]
-   * @param dto
+   * @param data
    * @param user
    */
   @Post()
   public async createOne(
-    @Body() dto: CreateChatDto,
+    @Body() data: CreateChatDto,
     @User() user: UserEntity,
   ): Promise<ChatEntity> {
-    const chat = await this.chatsService.selectOneByParticipants([user.id, dto.participant.id]);
+    const chat = await this.chatsService.selectOneByParticipants([user.id, data.participant.id]);
     if (chat) return this.chatsService.selectOne({ id: chat.id }, { loadEagerRelations: true });
 
     return this.chatsService.createOne({
-      participants: [{ user: { id: user.id } }, { user: dto.participant }],
+      participants: [{ user: { id: user.id } }, { user: data.participant }],
     });
   }
 
@@ -84,11 +77,12 @@ export class ChatsController {
    * @param user
    */
   @Get()
-  public async selectAll(
+  public async selectManyAndCount(
     @Query() options: SelectChatsDto,
     @User() user: UserEntity,
   ): Promise<PaginationChatsDto> {
-    return this.chatsService.selectAll(options, user);
+    options.userId = user.id;
+    return this.chatsService.selectManyAndCount(options);
   }
 
   /**
@@ -96,35 +90,8 @@ export class ChatsController {
    * @param conditions
    */
   @Delete(':id')
-  @UseRole(UserRoleEnum.SUPER_ADMIN)
-  public async deleteOne(@Param() conditions: ID): Promise<ChatEntity> {
+  public async deleteOne(@Param() conditions: ID, @User() user: UserEntity): Promise<ChatEntity> {
+    await this.chatParticipantsService.selectOne({ userId: user.id, chatId: conditions.id });
     return this.chatsService.deleteOne(conditions);
-  }
-
-  /**
-   * [description]
-   * @param condition
-   * @param options
-   * @param user
-   */
-  @Get('/:id/messages')
-  public async selectAllMessages(
-    @Param() chatConditions: ID,
-    @Query() options: SelectChatMessagesDto,
-    @User() user: UserEntity,
-  ): Promise<PaginationChatMessagesDto> {
-    await this.chatParticipantsService.selectOne({ user: { id: user.id }, chat: chatConditions });
-    return this.chatMessagesService.selectAll(options, chatConditions);
-  }
-
-  /**
-   * [description]
-   * @param condition
-   * @param options
-   * @param user
-   */
-  @Get('/messages/count/new')
-  public async selectNewMessagesCount(@User() user: UserEntity): Promise<number> {
-    return this.chatMessagesService.selectNewMessagesCount(user);
   }
 }

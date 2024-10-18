@@ -1,6 +1,8 @@
+import { addTransactionalDataSource } from 'typeorm-transactional';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { dirname } from 'path';
+import { DataSource } from 'typeorm';
+import { dirname } from 'node:path';
 
 import { ConfigService } from 'src/config';
 
@@ -10,6 +12,7 @@ import { ConfigService } from 'src/config';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
       name: 'default',
       useFactory: (configService: ConfigService) => ({
         name: configService.get('TYPEORM_NAME'),
@@ -27,7 +30,10 @@ import { ConfigService } from 'src/config';
         entities: [dirname(__dirname) + '/modules/**/*.entity.{ts,js}'],
         migrations: [__dirname + '/migrations/*.{ts,js}'],
       }),
-      inject: [ConfigService],
+      async dataSourceFactory(options) {
+        if (!options) throw new Error('Invalid options passed');
+        return addTransactionalDataSource(new DataSource(options));
+      },
     }),
   ],
 })

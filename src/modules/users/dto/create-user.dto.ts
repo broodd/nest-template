@@ -29,9 +29,9 @@ export class CreateUserDto {
    * [description]
    */
   @IsOptional()
-  @MinLength(3)
+  @MinLength(1)
   @MaxLength(128)
-  @ApiProperty({ minLength: 2, maxLength: 128 })
+  @ApiProperty({ minLength: 1, maxLength: 128 })
   public readonly name?: string;
 
   /**
@@ -50,4 +50,18 @@ export class CreateUserDto {
   @ValidateNested()
   @ApiProperty({ type: () => ID })
   public readonly cover?: ID;
+
+  /**
+   * [description]
+   */
+  @IsOptional()
+  @Type(() => ID)
+  @ValidateNested()
+  @ApiProperty({ type: () => ID })
+  public readonly backgroudCover?: ID;
 }
+
+/**
+ * [description]
+ */
+export class CreateUserWithoutPasswordDto extends OmitType(CreateUserDto, ['password']) {}

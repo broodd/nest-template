@@ -1,13 +1,15 @@
 import { IsArray, IsString, IsNotEmpty, IsOptional, IsBooleanString } from 'class-validator';
-import { dotNotation } from 'src/common/helpers/transform.helper';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { FindOneOptions, FindOptionsSelect } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { FindOptionsSelect } from 'typeorm';
+
+import { FindOneBracketsOptions } from 'src/common/interfaces';
+import { dotNotation } from 'src/common/helpers';
 
 /**
  * [description]
  */
-export class FindOneOptionsDto<Entity> implements FindOneOptions {
+export class FindOneOptionsDto<Entity> implements FindOneBracketsOptions {
   /**
    * Specifies what columns should be retrieved
    */
@@ -50,4 +52,10 @@ export class FindOneOptionsDto<Entity> implements FindOneOptions {
   public get loadEagerRelations(): boolean {
     return !!this.eager ? JSON.parse(this.eager) : true;
   }
+
+  /**
+   * Request userId
+   */
+  @ApiHideProperty()
+  public userId?: string;
 }

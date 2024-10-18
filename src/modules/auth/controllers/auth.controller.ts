@@ -13,22 +13,20 @@ import {
 
 import { User } from 'src/common/decorators';
 
-import { UserRefreshTokensService, UsersService } from '../../users/services';
-import { UserEntity } from '../../users/entities';
+import { UserRefreshTokensService, UsersService } from 'src/modules/users/services';
+import { UserEntity } from 'src/modules/users/entities';
 
 import { JwtRefreshGuard, JwtAuthGuard } from '../guards';
 import { AuthService } from '../services';
 import {
+  UpdatePasswordByCreateConfirmationDto,
   SendResetPasswordDto,
   ConfirmationEmailDto,
   JwtRefreshTokenDto,
-  UpdatePasswordDto,
-  CreateProfileDto,
   SelectProfileDto,
   ResetPasswordDto,
   UpdateProfileDto,
   CredentialsDto,
-  UpdateEmailDto,
   JwtTokensDto,
 } from '../dto';
 
@@ -65,8 +63,10 @@ export class AuthController {
    * @param data
    */
   @Post('signup')
-  public async createUser(@Body() data: CreateProfileDto): Promise<JwtTokensDto> {
-    return this.authService.createUser(data);
+  public async updatePasswordByCreateConfirmation(
+    @Body() data: UpdatePasswordByCreateConfirmationDto,
+  ): Promise<UserEntity> {
+    return this.authService.updatePasswordByCreateCreateConfirmation(data);
   }
 
   /**
@@ -152,35 +152,5 @@ export class AuthController {
     @User() user: UserEntity,
   ): Promise<UserEntity> {
     return this.usersService.updateOne({ id: user.id }, data);
-  }
-
-  /**
-   * [description]
-   * @param user
-   * @param data
-   */
-  @Patch('profile/password')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  public async updateUserPassword(
-    @Body() data: UpdatePasswordDto,
-    @User() user: UserEntity,
-  ): Promise<UserEntity> {
-    return this.authService.updatePassword(data, user);
-  }
-
-  /**
-   * [description]
-   * @param user
-   * @param data
-   */
-  @Patch('profile/email')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  public async updateUserEmail(
-    @Body() data: UpdateEmailDto,
-    @User() user: UserEntity,
-  ): Promise<UserEntity> {
-    return this.authService.updateEmail(data, user);
   }
 }

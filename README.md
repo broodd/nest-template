@@ -2,71 +2,105 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
 </p>
 
-<!-- <p align="center">
-  <a href="https://wakatime.com/@Sviat"><img src="https://wakatime.com/badge/user/bfbbf1d3-f694-478d-b70d-f9ab067f20f8.svg?style=for-the-badge" alt="Wakatime" /></a>
-</p> -->
+## Preparing
 
-<!-- ### Time spent on it
-
-<a href="https://wakatime.com/@Sviat/projects/hibebyqenc"><img src="https://wakatime.com/badge/user/bfbbf1d3-f694-478d-b70d-f9ab067f20f8/project/2b7cbf26-72c8-45c9-bad5-5ba97106226a.svg?style=for-the-badge" alt="Wakatime" /></a> -->
-
-## Commit Message Guidelines
-
-https://www.conventionalcommits.org/en/v1.0.0/
-
-https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines
-
-## Installation
+### Install npm packages
 
 ```bash
 $ npm install
 ```
 
-## Prepare
+### Set config secrets, environment variables
 
-set up `.env.development`, `.env.production`, `.env.test` files in `env` folder like `.env.example`
+Copy folder `.secrets.example`, then rename it to `.secrets`
+Value in files can be same as in `.secrets.example`
 
-## Create & run docker's containers
+```bash
+# copy example secrets and set up
+mkdir -p .secrets && cp -r .secrets.example/* .secrets/
+```
+
+Also need set AWS credentials in file `~/.aws/credentials` with content like below
+
+```
+[default]
+aws_access_key_id = *************************
+aws_secret_access_key = *********************************************
+```
+
+### Install docker
+
+Need to have docker and docker-compose installed.
+
+[Get docker link](https://docs.docker.com/get-docker/)
+
+Check installation by command
+
+```bash
+docker -v
+docker-compose -v
+```
+
+## Running app
+
+### Create and run docker's containers
+
+To create the docker containers using the following command:
 
 ```bash
 $ docker-compose up --build -d
 ```
 
-## Running the app
+### Start server
+
+To run server app using the following command:
 
 ```bash
-# development
-$ npm run start
-
 # watch mode
 $ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
 
-## Test
+**After success launch, server swagger will on link:** http://localhost:8080
+
+## Stopping app
+
+After stop server app process also stop the docker containers using the following command:
 
 ```bash
-# unit tests
+$ docker-compose down
+```
+
+## Running tests
+
+```bash
+# run unit tests
 $ npm run test
 
-# e2e tests
-$ npm run test:e2e
+# run test coverage
+$ npm run test:cov
+```
 
+## Generate documentation page
+
+Before generate documentation need run test coverage
+
+```bash
 # test coverage
 $ npm run test:cov
 ```
 
-## Documentation
+---
 
 ```bash
 # serve doc page
 $ npm run doc
-
-# generate doc files
-$ npm run doc:generate
 ```
+
+## Commit Message Guidelines
+
+https://www.conventionalcommits.org/en/v1.0.0/
+https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines
+
 
 ### Features
 

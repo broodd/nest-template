@@ -1,26 +1,25 @@
-import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
+import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
 import { MaxLength, MinLength } from 'class-validator';
-import { UpdateUserDto } from '../../users/dto';
+
+import { UpdateUserDto } from 'src/modules/users/dto';
 
 /**
  * [description]
  */
-export class UpdateProfileDto extends OmitType(UpdateUserDto, ['password', 'email']) {}
+export class UpdateProfileDto extends PartialType(UpdateUserDto) {}
 
 /**
  * [description]
  */
-export class UpdateEmailDto extends PickType(UpdateUserDto, ['email', 'password']) {}
-
-/**
- * [description]
- */
-export class UpdatePasswordDto extends PickType(UpdateUserDto, ['password']) {
+export class UpdatePasswordByCreateConfirmationDto extends PickType(UpdateUserDto, [
+  'password',
+  'email',
+]) {
   /**
    * [description]
    */
   @MinLength(8)
   @MaxLength(64)
-  @ApiProperty({ minLength: 8, maxLength: 64, example: 'password' })
-  public readonly oldPassword: string;
+  @ApiProperty({ minLength: 8, maxLength: 64, example: 'Password1' })
+  public readonly temporaryPassword: string;
 }

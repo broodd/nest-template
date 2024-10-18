@@ -1,8 +1,9 @@
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 
 import { CommonEntity } from 'src/common/entities';
+
 import { UserEntity } from './user.entity';
 
 /**
@@ -17,6 +18,13 @@ export class UserRefreshTokenEntity extends CommonEntity {
   @ApiHideProperty()
   @Column({ type: 'varchar', length: 149 })
   public ppid: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @Column({ type: 'uuid', nullable: false })
+  public readonly ownerId: string;
 
   /**
    * [description]

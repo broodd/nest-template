@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   postgres:
-    image: postgres:14-alpine
+    image: postgis/postgis:14-3.3-alpine
     ports:
       - '5432:5432'
     networks:
@@ -9,14 +9,14 @@ services:
     volumes:
       - 'postgres_data:/var/lib/postgresql/data'
     environment:
-      POSTGRES_DB: nest-template
+      POSTGRES_DB: nft-boilerplate
       POSTGRES_USER_FILE: /run/secrets/postgres-user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
     secrets:
       - postgres-user
       - postgres-password
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U nest-template']
+      test: ['CMD-SHELL', 'pg_isready -U nft-boilerplate']
       interval: 10s
       timeout: 5s
       retries: 5

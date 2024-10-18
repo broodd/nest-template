@@ -1,8 +1,7 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsDate, IsOptional } from 'class-validator';
 import { PartialType } from '@nestjs/swagger';
 
 import { CreateNotificationDto } from './create-notification.dto';
-import { NotificationsStatusEnum } from '../enums';
 
 /**
  * [description]
@@ -11,7 +10,7 @@ export class UpdateNotificationDto extends PartialType(CreateNotificationDto) {
   /**
    * [description]
    */
+  @IsDate()
   @IsOptional()
-  @IsEnum(NotificationsStatusEnum)
-  public readonly status?: NotificationsStatusEnum;
+  public readonly readAt?: Date;
 }

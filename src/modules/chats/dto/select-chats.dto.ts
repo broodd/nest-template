@@ -35,6 +35,7 @@ export class SelectChatsDto extends FindManyOptionsDto<ChatEntity> {
    */
   public get whereBrackets(): Brackets {
     const { search } = this;
+
     return new Brackets((qb) => {
       if (search)
         qb.andWhere(querySearch('ChatEntity_participant_other_user.email'), {

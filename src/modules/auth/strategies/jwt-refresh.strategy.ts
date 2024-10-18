@@ -1,15 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { compare } from 'src/common/helpers';
 
 import { ErrorTypeEnum } from 'src/common/enums';
+import { compare } from 'src/common/helpers';
 import { ConfigService } from 'src/config';
 
-import { UserEntity } from '../../users/entities';
-
+import { UserEntity } from 'src/modules/users/entities';
 import { JwtRefreshTokenPayloadDto } from '../dto';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services';
 
 /**
  * [description]

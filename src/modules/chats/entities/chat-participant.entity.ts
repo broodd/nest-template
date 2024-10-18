@@ -1,14 +1,7 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import {
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  JoinColumn,
-  ManyToOne,
-  Column,
-  Entity,
-  Index,
-} from 'typeorm';
+import { JoinColumn, ManyToOne, Column, Entity, Index } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+
+import { CommonEntity } from 'src/common/entities';
 
 import { UserEntity } from 'src/modules/users/entities';
 import { ChatEntity } from './chat.entity';
@@ -17,15 +10,8 @@ import { ChatEntity } from './chat.entity';
  * [description]
  */
 @Entity('chat_participants')
-@Index('unique_chat_participants', ['user', 'chat'], { unique: true })
-export class ChatParticipantEntity {
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
+@Index('chat_participants__chat_user', ['chat', 'user'], { unique: true })
+export class ChatParticipantEntity extends CommonEntity {
   /**
    * [description]
    */
@@ -37,7 +23,7 @@ export class ChatParticipantEntity {
    * [description]
    */
   @JoinColumn()
-  @ApiHideProperty()
+  @ApiProperty()
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE', nullable: false })
   public readonly user: Partial<UserEntity>;
 
@@ -52,28 +38,7 @@ export class ChatParticipantEntity {
    * [description]
    */
   @JoinColumn()
-  @ApiHideProperty()
+  @ApiProperty()
   @ManyToOne(() => ChatEntity, { onDelete: 'CASCADE', nullable: false })
   public readonly chat: Partial<ChatEntity>;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    readonly: true,
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
 }

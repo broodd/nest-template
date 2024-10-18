@@ -1,4 +1,5 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { IsNull } from 'typeorm';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -28,12 +29,19 @@ import {
   UpdateNotificationDto,
 } from '../dto';
 
+/**
+ * [description]
+ */
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @ApiTags('notifications')
 @Controller('notifications')
 @UseInterceptors(ClassSerializerInterceptor)
 export class NotificationsController {
+  /**
+   * [description]
+   * @param notificationsService
+   */
   constructor(private readonly notificationsService: NotificationsService) {}
 
   /**
@@ -60,10 +68,15 @@ export class NotificationsController {
   @Get()
   public async selectManyAndCount(
     @Query() options: SelectNotificationsDto,
-    @User() user: UserEntity,
+    @User() owner: UserEntity,
   ): Promise<PaginationNotificationsDto> {
-    options.ownerId = user.id;
-    return this.notificationsService.selectManyAndCount(options);
+    options.ownerId = owner.id;
+    const data = await this.notificationsService.selectManyAndCount(options);
+    await this.notificationsService.update(
+      { ownerId: owner.id, readAt: IsNull() },
+      { readAt: new Date() },
+    );
+    return data;
   }
 
   /**
@@ -78,7 +91,7 @@ export class NotificationsController {
     @User() owner: UserEntity,
     @Query() options?: FindOneOptionsDto<NotificationEntity>,
   ): Promise<NotificationEntity> {
-    return this.notificationsService.selectOne({ ...conditions, owner: { id: owner.id } }, options);
+    return this.notificationsService.selectOne({ ...conditions, ownerId: owner.id }, options);
   }
 
   /**
@@ -93,7 +106,7 @@ export class NotificationsController {
     @Body() data: UpdateNotificationDto,
     @User() owner: UserEntity,
   ): Promise<NotificationEntity> {
-    return this.notificationsService.updateOne({ ...conditions, owner: { id: owner.id } }, data);
+    return this.notificationsService.updateOne({ ...conditions, ownerId: owner.id }, data);
   }
 
   /**
@@ -106,6 +119,6 @@ export class NotificationsController {
     @Param() conditions: ID,
     @User() owner: UserEntity,
   ): Promise<NotificationEntity> {
-    return this.notificationsService.deleteOne({ ...conditions, owner: { id: owner.id } });
+    return this.notificationsService.deleteOne({ ...conditions, ownerId: owner.id });
   }
 }

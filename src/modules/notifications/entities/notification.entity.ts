@@ -1,10 +1,11 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { JoinColumn, ManyToOne, Entity, Column } from 'typeorm';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+
+import { CommonEntity } from 'src/common/entities';
 
 import { UserEntity } from 'src/modules/users/entities';
 
-import { NotificationsStatusEnum, NotificationsTypeEnum } from '../enums';
-import { CommonEntity } from 'src/common/entities';
+import { NotificationsTypeEnum } from '../enums';
 
 /**
  * [description]
@@ -14,9 +15,16 @@ export class NotificationEntity extends CommonEntity {
   /**
    * [description]
    */
-  @ApiProperty({ enum: NotificationsStatusEnum, default: NotificationsStatusEnum.UNREAD })
-  @Column({ type: 'enum', enum: NotificationsStatusEnum, default: NotificationsStatusEnum.UNREAD })
-  public readonly status: NotificationsStatusEnum;
+  @ApiProperty({ maxLength: 256 })
+  @Column({ type: 'varchar', length: 256 })
+  public readonly title: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty({ maxLength: 256 })
+  @Column({ type: 'varchar', length: 256, nullable: true })
+  public readonly body?: string;
 
   /**
    * [description]
@@ -28,11 +36,11 @@ export class NotificationEntity extends CommonEntity {
   /**
    * [description]
    */
-  @ApiProperty({ maxLength: 256 })
-  @Column({ type: 'varchar', length: 256 })
-  public readonly title: string;
+  @ApiProperty()
+  @Column({ type: 'timestamptz', nullable: true })
+  public readonly readAt?: Date;
 
-  /*
+  /**
    * [description]
    */
   @ApiProperty()

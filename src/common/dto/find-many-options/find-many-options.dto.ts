@@ -28,7 +28,7 @@ export class FindManyOptionsDto<Entity>
     type: [String],
     description: `Order, in which entities should be ordered. For order by relation field use <i>elation.field</i>`,
   })
-  public readonly asc?: string[];
+  public asc?: string[];
 
   /**
    * If the same fields are specified for sorting in two directions, the priority is given to DESC
@@ -44,7 +44,7 @@ export class FindManyOptionsDto<Entity>
     description:
       'If the same fields are specified for sorting in two directions, the priority is given to DESC',
   })
-  public readonly desc?: string[];
+  public desc?: string[];
 
   /**
    * Getter to form an object of order. Available after calling instanceToPlain
@@ -77,7 +77,7 @@ export class FindManyOptionsDto<Entity>
     example: 1,
     description: 'Offset (paginated) where from entities should be taken',
   })
-  public readonly page?: number = 1;
+  public page?: number = 1;
 
   /**
    * Limit (paginated) - max number of entities should be taken

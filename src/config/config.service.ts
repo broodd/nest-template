@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
-import { join } from 'node:path';
+import fs from 'fs';
+import { join } from 'path';
 
 import { ConfigMode } from './interfaces/config.interface';
 
@@ -53,7 +53,7 @@ export class ConfigService {
     let variable = process.env[key];
     if (!variable) {
       const path = process.env[key + this.envFilePostfix];
-      variable = existsSync(path) ? readFileSync(path, 'utf8') : null;
+      variable = fs.existsSync(path) ? fs.readFileSync(path, 'utf8') : null;
     }
     if (!variable) throw TypeError(`The ${key} cannot be undefined`);
     try {

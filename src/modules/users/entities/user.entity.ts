@@ -1,20 +1,28 @@
-import { FileEntity } from 'src/modules/files/entities';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { hash } from 'src/common/helpers';
 import {
-  Column,
-  Entity,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
   BeforeInsert,
   BeforeUpdate,
+  JoinColumn,
+  OneToMany,
+  ManyToOne,
+  Column,
+  Entity,
 } from 'typeorm';
+
+import { VirtualColumn } from 'src/database/decorators';
+import { CommonEntity } from 'src/common/entities';
+
+import { NotificationEntity } from 'src/modules/notifications/entities';
+import { RelationshipEntity } from 'src/modules/relationships/entities';
+import { PostEntity, StoryEntity } from 'src/modules/posts/entities';
+import { GroupSubscriberEntity } from 'src/modules/groups/entities';
+import { FileEntity } from 'src/modules/files/entities';
 
 import { UserNotificationTokenEntity } from './user-notification-token.entity';
 import { UserRefreshTokenEntity } from './user-refresh-token.entity';
 import { UserRoleEnum, UserStatusEnum } from '../enums';
-import { CommonEntity } from 'src/common/entities';
 
 /**
  * [description]
@@ -40,13 +48,20 @@ export class UserEntity extends CommonEntity {
    */
   @ApiProperty({ maxLength: 128 })
   @Column({ type: 'varchar', length: 128, nullable: true })
-  public readonly name: string;
+  public readonly name?: string;
 
   /**
    * [description]
    */
-  @ApiProperty({ maxLength: 320, uniqueItems: true })
-  @Column({ type: 'varchar', length: 320, unique: true })
+  @ApiProperty({ maxLength: 5120 })
+  @Column({ type: 'varchar', length: 5120, nullable: true })
+  public readonly description?: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty({ maxLength: 50, uniqueItems: true })
+  @Column({ type: 'varchar', length: 50, unique: true })
   public readonly email: string;
 
   /**
@@ -74,10 +89,22 @@ export class UserEntity extends CommonEntity {
   @ManyToOne(() => FileEntity, {
     onDelete: 'SET NULL',
     nullable: true,
-    // cascade: true, // Turned off cause have 'Cyclic dependency' on FileEntity {owner}; Choose one of these
+    cascade: true,
     eager: true,
   })
-  public readonly cover: Partial<FileEntity> = new FileEntity();
+  public readonly cover: Partial<FileEntity>;
+
+  /**
+   * [description]
+   */
+  @JoinColumn()
+  @ApiProperty({ type: () => FileEntity })
+  @ManyToOne(() => FileEntity, {
+    onDelete: 'SET NULL',
+    nullable: true,
+    cascade: true,
+  })
+  public readonly backgroudCover: Partial<FileEntity>;
 
   /**
    * [description]
@@ -92,4 +119,83 @@ export class UserEntity extends CommonEntity {
   @ApiHideProperty()
   @OneToMany(() => UserNotificationTokenEntity, ({ owner }) => owner)
   public readonly notificationTokens: UserNotificationTokenEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => NotificationEntity, ({ owner }) => owner)
+  public readonly notifications: NotificationEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => RelationshipEntity, ({ owner }) => owner)
+  public readonly followings: RelationshipEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => RelationshipEntity, ({ target }) => target)
+  public readonly followers: RelationshipEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => GroupSubscriberEntity, ({ user }) => user)
+  public readonly groups: GroupSubscriberEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => PostEntity, ({ owner }) => owner)
+  public readonly posts: PostEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @OneToMany(() => StoryEntity, ({ owner }) => owner)
+  public readonly stories: StoryEntity[];
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  public readonly __posts_count?: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  public readonly __followers_count?: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  public readonly __followings_count?: string;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  @Transform(({ value }) => (value !== undefined ? !!value : undefined))
+  public readonly __is_followings?: boolean;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  @Transform(({ value }) => (value !== undefined ? !!value : undefined))
+  public readonly __is_viewed_stories?: boolean;
 }

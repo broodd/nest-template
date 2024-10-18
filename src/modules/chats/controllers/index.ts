@@ -1,1 +1,2 @@
-export * from './chats.controller'
+export * from './chat-messages.controller';
+export * from './chats.controller';

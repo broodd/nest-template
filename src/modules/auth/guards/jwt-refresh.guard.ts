@@ -1,9 +1,9 @@
-import { AuthGuard } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { UserEntity } from '../../users/entities';
+import { UserEntity } from 'src/modules/users/entities';
 
 /**
  * [description]

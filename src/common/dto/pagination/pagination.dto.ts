@@ -14,6 +14,15 @@ export class PaginationDto<Entity> {
    * Total number of records.
    */
   public readonly count: number;
+
+  /**
+   * [description]
+   * @param result
+   * @param count
+   */
+  constructor([result, count]: [Entity[], number]) {
+    Object.assign(this, { result, count });
+  }
 }
 
 /**

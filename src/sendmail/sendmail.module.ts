@@ -1,22 +1,17 @@
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 
 import { ConfigService } from 'src/config';
 
-import { SendMailService } from './services/sendmail.service';
-import { SENDMAIL_QUEUE } from './queues/constants';
-import { SendMailProcessor } from './queues';
+import { SendMailService } from './sendmail.service';
 
 @Module({
   imports: [
     MailerModule.forRootAsync({
       useFactory: async (config: ConfigService) => ({
         transport: {
-          tls: {
-            rejectUnauthorized: true,
-          },
+          tls: { rejectUnauthorized: true },
           host: config.get('SMTP_HOST'),
           port: config.get('SMTP_PORT'),
           secure: true,
@@ -35,23 +30,25 @@ import { SendMailProcessor } from './queues';
         },
         template: {
           dir: __dirname + '/templates',
-          adapter: new HandlebarsAdapter(),
-          options: {
-            strict: true,
-          },
+          adapter: new HandlebarsAdapter({
+            ifNotEquals: function (arg1, arg2, options) {
+              return arg1 != arg2 ? options.fn(this) : options.inverse(this);
+            },
+            ifEquals: function (arg1, arg2, options) {
+              return arg1 == arg2 ? options.fn(this) : options.inverse(this);
+            },
+            parse: function (text) {
+              const template = Handlebars.compile(text);
+              return new Handlebars.SafeString(template(this));
+            },
+          }),
+          options: { strict: true },
         },
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: SENDMAIL_QUEUE,
-      defaultJobOptions: {
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    }),
   ],
-  providers: [SendMailProcessor, SendMailService],
+  providers: [SendMailService],
   exports: [SendMailService],
 })
 export class SendMailModule {}

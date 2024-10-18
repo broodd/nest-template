@@ -1,88 +1,37 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-  Entity,
-  Column,
-} from 'typeorm';
+import { OneToMany, Entity } from 'typeorm';
 
 import { UserEntity } from 'src/modules/users/entities';
+import { CommonEntity } from 'src/common/entities';
 
 import { ChatParticipantEntity } from './chat-participant.entity';
 import { ChatMessageEntity } from './chat-message.entity';
-import { ChatTypeEnum } from '../enums';
+import { VirtualColumn } from 'src/database/decorators';
 
 /**
  * [description]
  */
 @Entity('chats')
-export class ChatEntity {
+export class ChatEntity extends CommonEntity {
   /**
    * [description]
    */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ enum: ChatTypeEnum, nullable: false })
-  @Column({ type: 'enum', enum: ChatTypeEnum, nullable: false, default: ChatTypeEnum.PERSONAL })
-  public readonly type: ChatTypeEnum;
-
-  /**
-   * [description]
-   */
-  @ApiHideProperty()
-  @ManyToOne(() => ChatMessageEntity, { onDelete: 'SET NULL', nullable: true })
-  public readonly lastMessage: Partial<ChatMessageEntity>;
-
-  /**
-   * [description]
-   */
-  @ApiHideProperty()
+  @ApiProperty()
   @OneToMany(() => ChatMessageEntity, ({ chat }) => chat)
   public readonly messages: Partial<ChatMessageEntity>[];
 
   /**
    * [description]
    */
-  @ApiHideProperty()
-  @OneToMany(() => ChatParticipantEntity, (participant) => participant.chat, {
-    cascade: true,
-  })
+  @ApiProperty()
+  @OneToMany(() => ChatParticipantEntity, ({ chat }) => chat, { cascade: true })
   public readonly participants: Partial<ChatParticipantEntity>[];
 
   /**
    * [description]
    */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    readonly: true,
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiHideProperty()
+  @ApiProperty()
   @Transform(({ value }) => value && value.user)
   public readonly participant: Partial<UserEntity>;
 
@@ -90,5 +39,13 @@ export class ChatEntity {
    * [description]
    */
   @ApiProperty()
-  public newMessagesCount?: number;
+  @VirtualColumn()
+  public readonly lastMessage?: Partial<ChatMessageEntity>;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @VirtualColumn()
+  public readonly __new_messages_count?: string;
 }

@@ -1,5 +1,5 @@
 ### Base
-FROM node:14-alpine as base
+FROM node:18-alpine as base
 ENV NODE_ENV=production
 
 RUN apk update --no-cache
@@ -13,7 +13,6 @@ COPY --chown=node:node ./src ./src
 COPY --chown=node:node ./nest-cli.json ./
 COPY --chown=node:node ./package*.json ./
 COPY --chown=node:node ./tsconfig*.json ./
-COPY --chown=node:node ./.env.${NODE_ENV} ./
 
 RUN npm install --only=production
 
@@ -21,18 +20,18 @@ RUN npm install --only=production
 ### Builder
 FROM base as builder
 
-RUN npm install --only=development
+RUN npm install --production=false
 RUN npm run build
 
 
 ### Runtime
-FROM node:14-alpine as runtime
+FROM node:18-alpine as runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
 # Copy runtime dependencies
 COPY --chown=node:node --from=base /app/node_modules ./node_modules
-COPY --chown=node:node --from=base /app/.env.${NODE_ENV} ./
+COPY --chown=node:node .env.${NODE_ENV} ./
 COPY --chown=node:node --from=base /app/package.json ./
 COPY --chown=node:node --from=builder /app/dist ./dist
 

@@ -32,9 +32,9 @@ describe('SocketsService', () => {
     });
   });
 
-  describe('selectAllIds', () => {
+  describe('selectManyIds', () => {
     it('select', async () => {
-      const received = service.selectAllIds(['1', '2']);
+      const received = service.selectManyIds(['1', '2']);
       expect(received).toEqual(['1', '2', '1']);
     });
   });

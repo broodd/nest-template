@@ -1,18 +1,22 @@
-import { PaginationMixin } from 'src/common/dto';
+import { ApiProperty } from '@nestjs/swagger';
+
+import { PaginationDto } from 'src/common/dto';
 
 import { FileEntity } from '../entities';
 
 /**
  * [description]
  */
-export class PaginationFilesDto extends PaginationMixin(FileEntity) {
+export class PaginationFilesDto extends PaginationDto<FileEntity> {
   /**
-   * [description]
-   * @param result
-   * @param total
+   * Result of the selection by the specified parameters.
    */
-  constructor([result, total]: [FileEntity[], number]) {
-    super();
-    Object.assign(this, { result, total });
-  }
+  @ApiProperty({ type: () => [FileEntity] })
+  public readonly result: FileEntity[];
+
+  /**
+   * Total number of records.
+   */
+  @ApiProperty()
+  public readonly count: number;
 }

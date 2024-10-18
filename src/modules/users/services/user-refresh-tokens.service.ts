@@ -1,12 +1,13 @@
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { hash } from 'src/common/helpers';
 import { randomBytes } from 'crypto';
+
+import { CommonService } from 'src/common/services';
+import { hash } from 'src/common/helpers';
 
 import { PaginationUsersRefreshTokensDto } from '../dto';
 import { UserRefreshTokenEntity } from '../entities';
-import { CommonService } from 'src/common/services';
 
 /**
  * [description]

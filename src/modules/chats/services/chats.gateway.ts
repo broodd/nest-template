@@ -1,7 +1,8 @@
 import { UseFilters, UsePipes } from '@nestjs/common';
+import { Transactional } from 'typeorm-transactional';
 import { instanceToPlain } from 'class-transformer';
+import { IsNull, Not, Raw } from 'typeorm';
 import { Server } from 'socket.io';
-import { Not, Raw } from 'typeorm';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -10,28 +11,30 @@ import {
 } from '@nestjs/websockets';
 
 import { SocketsExceptionFilter } from 'src/common/filters';
-import { SocketsService } from 'src/modules/sockets';
 import { SocketUser } from 'src/common/decorators';
 import { validationPipe } from 'src/common/pipes';
 
+import { SocketsService } from 'src/modules/sockets/services';
 import { UserEntity } from 'src/modules/users/entities';
 
-import { ChatMessageStatusEnum, ChatSocketEventsEnum } from '../enums';
 import { ChatParticipantsService } from './chat-participants.service';
 import { ChatMessagesService } from './chat-messages.service';
+import { ChatSocketEventsEnum } from '../enums';
+import { ChatMessageEntity } from '../entities';
 import { ChatsService } from './chats.service';
 import {
   ChatReadMessageResponseDto,
   ChatReceiveMessageDto,
   CreateChatMessageDto,
   ChatReadMessageDto,
-} from '../dto';
+} from '../dto/chat-messages';
 
 /**
  * [description]
  */
 @WebSocketGateway({
-  cors: { origin: '*' }, // TODO, TBD
+  // namespace: 'chats',
+  cors: { origin: '*' }, // TODO
   transports: ['websocket'],
 })
 @UsePipes(validationPipe)
@@ -62,23 +65,24 @@ export class ChatsGateway {
    * @param entityLike
    * @param user
    */
-  @SubscribeMessage(ChatSocketEventsEnum.CHAT_SEND_MESSAGE)
-  public async handleSendMessage(
-    @MessageBody() entityLike: CreateChatMessageDto,
-    @SocketUser() user: UserEntity,
-  ): Promise<void> {
-    await this.chatParticipantsService.selectOne({ user: { id: user.id }, chat: entityLike.chat });
-
+  @Transactional()
+  public async createOne(
+    entityLike: CreateChatMessageDto,
+    user: UserEntity,
+  ): Promise<ChatMessageEntity> {
     const message = await this.chatMessagesService.createOne({
       ...entityLike,
       owner: { id: user.id },
     });
 
-    const chat = await this.chatsService.selectOneEager(entityLike.chat, user);
-    const participantsIds = await this.chatParticipantsService.selectIds({
-      where: { chat: entityLike.chat },
+    const chat = await this.chatsService.selectOneWithOwner(entityLike.chat, {
+      userId: user.id,
+      loadEagerRelations: true,
     });
-    const socketsIds = this.socketsService.selectAllIds(participantsIds);
+    const participantsIds = await this.chatParticipantsService.selectIds({
+      where: { chatId: entityLike.chat.id },
+    });
+    const socketsIds = this.socketsService.selectManyIds(participantsIds);
 
     this.server.to(socketsIds).emit(
       ChatSocketEventsEnum.CHAT_RECEIVE_MESSAGE,
@@ -87,6 +91,23 @@ export class ChatsGateway {
         message: instanceToPlain(message),
       }),
     );
+
+    return message;
+  }
+
+  /**
+   * [description]
+   * @param entityLike
+   * @param user
+   */
+  @Transactional()
+  @SubscribeMessage(ChatSocketEventsEnum.CHAT_SEND_MESSAGE)
+  public async handleSendMessage(
+    @MessageBody() entityLike: CreateChatMessageDto,
+    @SocketUser() user: UserEntity,
+  ): Promise<void> {
+    await this.chatParticipantsService.selectOne({ userId: user.id, chatId: entityLike.chat.id });
+    await this.createOne(entityLike, user);
   }
 
   /**
@@ -94,6 +115,7 @@ export class ChatsGateway {
    * @param conditions
    * @param user
    */
+  @Transactional()
   @SubscribeMessage(ChatSocketEventsEnum.CHAT_READ_MESSAGE)
   public async handleReadMessage(
     @MessageBody() conditions: ChatReadMessageDto,
@@ -105,24 +127,25 @@ export class ChatsGateway {
       ...conditions,
       owner: { id: Not(user.id) },
     });
-    await this.chatMessagesService.updateAll(
+
+    await this.chatMessagesService.update(
       {
-        chat: conditions.chat,
-        owner: { id: Not(user.id) },
-        status: ChatMessageStatusEnum.SENT,
+        chatId: conditions.chat.id,
+        ownerId: Not(user.id),
+        readAt: IsNull(),
         createdAt: Raw(
           (columnAlias) =>
             `ROUND(EXTRACT(EPOCH FROM ${columnAlias})::NUMERIC, 3) * 1000 <= :createdAt`,
-          { createdAt: message.createdAt.getTime() },
+          { createdAt: message.createdAt.getTime() + 1 },
         ),
       },
-      { status: ChatMessageStatusEnum.READ },
+      { readAt: () => 'CURRENT_TIMESTAMP' },
     );
 
     const participantsIds = await this.chatParticipantsService.selectIds({
-      where: { chat: conditions.chat },
+      where: { chatId: conditions.chat.id },
     });
-    const socketsIds = this.socketsService.selectAllIds(participantsIds);
+    const socketsIds = this.socketsService.selectManyIds(participantsIds);
 
     this.server.to(socketsIds).emit(
       ChatSocketEventsEnum.CHAT_READ_MESSAGE,

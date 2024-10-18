@@ -9,6 +9,6 @@ export class ID {
    * Entity ID
    */
   @IsUUID()
-  @ApiProperty({ example: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' })
+  @ApiProperty()
   public readonly id: string;
 }

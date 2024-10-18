@@ -103,7 +103,7 @@ describe('UsersService', () => {
 
       jest
         .spyOn(service, 'selectOne')
-        .mockImplementationOnce(async () => ({ id: '' } as UserEntity));
+        .mockImplementationOnce(async () => ({ id: '' }) as UserEntity);
 
       return service.updateOne({ id: '' }, { password: null }).catch((err) => {
         expect(err).toBeInstanceOf(ConflictException);

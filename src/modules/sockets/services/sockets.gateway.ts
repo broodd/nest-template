@@ -1,4 +1,4 @@
-import { ValidationPipe, UseFilters, UsePipes } from '@nestjs/common';
+import { UseFilters, UsePipes } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
 import {
@@ -9,11 +9,12 @@ import {
 } from '@nestjs/websockets';
 
 import { SocketsExceptionFilter } from 'src/common/filters';
+import { validationPipe } from 'src/common/pipes';
 import { ErrorTypeEnum } from 'src/common/enums';
 
+import { UsersService } from 'src/modules/users/services';
+import { UserEntity } from 'src/modules/users/entities';
 import { SocketsService } from './sockets.service';
-import { UsersService } from '../../users/services';
-import { UserEntity } from '../../users/entities';
 
 /**
  * [description]
@@ -22,8 +23,8 @@ import { UserEntity } from '../../users/entities';
   cors: { origin: '*' }, // TODO, TBD
   transports: ['websocket'],
 })
+@UsePipes(validationPipe)
 @UseFilters(SocketsExceptionFilter)
-@UsePipes(new ValidationPipe({ transform: true }))
 export class SocketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * [description]

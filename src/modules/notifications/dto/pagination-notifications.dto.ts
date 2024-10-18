@@ -1,16 +1,22 @@
-import { PaginationMixin } from 'src/common/dto';
+import { ApiProperty } from '@nestjs/swagger';
+
+import { PaginationDto } from 'src/common/dto';
 
 import { NotificationEntity } from '../entities';
 
 /**
  * [description]
  */
-export class PaginationNotificationsDto extends PaginationMixin(NotificationEntity) {
+export class PaginationNotificationsDto extends PaginationDto<NotificationEntity> {
   /**
-   * [description]
+   * Result of the selection by the specified parameters.
    */
-  constructor([result, count]: [NotificationEntity[], number]) {
-    super();
-    Object.assign(this, { result, count });
-  }
+  @ApiProperty({ type: () => [NotificationEntity] })
+  public readonly result: NotificationEntity[];
+
+  /**
+   * Total number of records.
+   */
+  @ApiProperty()
+  public readonly count: number;
 }

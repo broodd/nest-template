@@ -2,9 +2,9 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
+  StreamableFile,
   Controller,
   UseGuards,
-  Headers,
   Delete,
   Param,
   Patch,
@@ -12,9 +12,10 @@ import {
   Post,
   Body,
   Get,
+  Header,
 } from '@nestjs/common';
 
-import { UseRole } from 'src/common/decorators';
+import { User, UseRole } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
 
 import { JwtAuthGuard } from 'src/modules/auth/guards';
@@ -50,7 +51,7 @@ export class UsersController {
    * @param data
    */
   @Post()
-  @UseRole(UserRoleEnum.SUPER_ADMIN)
+  @UseRole(UserRoleEnum.ADMIN)
   public async createOne(@Body() data: CreateUserDto): Promise<UserEntity> {
     return this.usersService.createOne(data);
   }
@@ -60,9 +61,24 @@ export class UsersController {
    * @param options
    */
   @Get()
-  @UseRole(UserRoleEnum.SUPER_ADMIN)
-  public async selectManyAndCount(@Query() options: SelectUsersDto): Promise<PaginationUsersDto> {
+  public async selectManyAndCount(
+    @Query() options: SelectUsersDto,
+    @User() user: UserEntity,
+  ): Promise<PaginationUsersDto> {
+    options.userId = user.id;
     return this.usersService.selectManyAndCount(options);
+  }
+
+  /**
+   * [description]
+   * @param options
+   */
+  @Get('export/csv')
+  @Header('Content-Disposition', 'attachment; filename=users.csv')
+  public async selectAllAsCSV(@Query() options: SelectUsersDto): Promise<StreamableFile> {
+    options.take = undefined;
+    const readable = await this.usersService.exportManyAsCSV(options);
+    return new StreamableFile(readable);
   }
 
   /**
@@ -71,11 +87,13 @@ export class UsersController {
    * @param options
    */
   @Get(':id')
-  public async selectOne(
+  public async selectOneWithCounters(
     @Param() conditions: ID,
     @Query() options: SelectUserDto,
+    @User() user: UserEntity,
   ): Promise<UserEntity> {
-    return this.usersService.selectOne(conditions, options);
+    options.userId = user.id;
+    return this.usersService.selectOneWithCounters(conditions, options);
   }
 
   /**
@@ -84,7 +102,7 @@ export class UsersController {
    * @param data
    */
   @Patch(':id')
-  @UseRole(UserRoleEnum.SUPER_ADMIN)
+  @UseRole(UserRoleEnum.ADMIN)
   public async updateOne(
     @Param() conditions: ID,
     @Body() data: UpdateUserDto,
@@ -97,7 +115,7 @@ export class UsersController {
    * @param conditions
    */
   @Delete(':id')
-  @UseRole(UserRoleEnum.SUPER_ADMIN)
+  @UseRole(UserRoleEnum.ADMIN)
   public async deleteOne(@Param() conditions: ID): Promise<UserEntity> {
     return this.usersService.deleteOne(conditions);
   }

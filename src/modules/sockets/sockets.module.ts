@@ -1,10 +1,10 @@
-import { JwtModule } from '@nestjs/jwt';
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 
 import { ConfigService } from 'src/config';
 
-import { SocketsService } from './services/sockets.service';
 import { SocketsGateway } from './services/sockets.gateway';
+import { SocketsService } from './services/sockets.service';
 import { UsersModule } from '../users';
 
 /**
@@ -25,6 +25,6 @@ import { UsersModule } from '../users';
     UsersModule,
   ],
   providers: [SocketsGateway, SocketsService],
-  exports: [SocketsService],
+  exports: [SocketsGateway, SocketsService],
 })
 export class SocketsModule {}

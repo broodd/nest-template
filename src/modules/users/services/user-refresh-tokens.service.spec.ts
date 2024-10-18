@@ -102,7 +102,7 @@ describe('UserRefreshTokensService', () => {
 
       jest
         .spyOn(service, 'selectOne')
-        .mockImplementationOnce(async () => ({ id: '' } as UserRefreshTokenEntity));
+        .mockImplementationOnce(async () => ({ id: '' }) as UserRefreshTokenEntity);
 
       return service.updateOne({ id: '' }, { ppid: null }).catch((err) => {
         expect(err).toBeInstanceOf(ConflictException);

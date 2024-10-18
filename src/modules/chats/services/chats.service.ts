@@ -1,16 +1,14 @@
-import { FindOptionsWhere, FindOneOptions, EntityManager, Repository, In } from 'typeorm';
-import { NotFoundException, ConflictException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm';
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { instanceToPlain } from 'class-transformer';
+import { InjectRepository } from '@nestjs/typeorm';
 
+import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { UserEntity } from 'src/modules/users/entities';
-
-import { ChatMessageStatusEnum, ChatTypeEnum } from '../enums';
-import { PaginationChatsDto, SelectChatsDto } from '../dto';
-import { ChatEntity } from '../entities';
+import { ChatEntity, ChatMessageEntity } from '../entities';
+import { PaginationChatsDto } from '../dto';
 
 /**
  * [description]
@@ -29,88 +27,56 @@ export class ChatsService extends CommonService<ChatEntity, PaginationChatsDto> 
   }
 
   /**
-   * [description]
-   * @param data
-   * @param user
+   * Join partial columns of last message
+   * @param qb
    */
-  public async selectAllStats(
-    data: ChatEntity[],
-    user: Partial<UserEntity>,
-  ): Promise<ChatEntity[]> {
-    const stats: Record<string, ChatEntity> = await this.find({ loadEagerRelations: false })
-      .select('ChatEntity.id', 'id')
-      .addSelect('COUNT(ChatEntity_messages.id)::INT', 'newMessagesCount')
-      .leftJoin(
-        'ChatEntity.messages',
-        'ChatEntity_messages',
-        'ChatEntity_messages.status = :status AND ChatEntity_messages.ownerId != :ownerId',
-        { status: ChatMessageStatusEnum.SENT, ownerId: user.id },
-      )
-      .groupBy('ChatEntity.id')
-      .where({ id: In(data.map((row) => row.id)) })
-      .getRawMany()
-      .then((data) => data.reduce((acc, curr) => ((acc[curr.id] = curr), acc), {}));
+  public selectLastMessageQuery = (
+    qb: SelectQueryBuilder<ChatMessageEntity>,
+  ): SelectQueryBuilder<ChatMessageEntity> => {
+    const columns = this.repository.manager
+      .getRepository(ChatMessageEntity)
+      .metadata.columns.map((el) => el.databaseName);
 
-    return data.map((row) => ((row.newMessagesCount = stats[row.id].newMessagesCount), row));
-  }
+    qb.select(
+      `JSON_BUILD_OBJECT(${columns.map((c) => `'${c}', ChatMessageEntity.${c}`).join(', ')})`,
+    )
+      .from(ChatMessageEntity, 'ChatMessageEntity')
+      .where('ChatMessageEntity.chatId = ChatEntity.id')
+      .orderBy('ChatMessageEntity.createdAt', 'DESC')
+      .limit(1);
 
-  /**
-   * [description]
-   * @param data
-   * @param user
-   * @param equal
-   */
-  public async selectOneStats(
-    data: ChatEntity,
-    user: Partial<UserEntity>,
-    equal = false,
-  ): Promise<ChatEntity> {
-    const qb = this.find({ loadEagerRelations: false })
-      .select('ChatEntity.id', 'id')
-      .addSelect('COUNT(ChatEntity_messages.id)::INT', 'newMessagesCount')
-      .leftJoin(
-        'ChatEntity.messages',
-        'ChatEntity_messages',
-        'ChatEntity_messages.status = :status',
-        { status: ChatMessageStatusEnum.SENT, ownerId: user.id },
-      )
-      .groupBy('ChatEntity.id')
-      .where({ id: data.id });
-
-    equal
-      ? qb.andWhere('ChatEntity_messages.ownerId = :ownerId')
-      : qb.andWhere('ChatEntity_messages.ownerId != :ownerId');
-
-    const stats: Partial<ChatEntity> = await qb.getRawOne();
-    data.newMessagesCount = stats.newMessagesCount;
-    return data;
-  }
+    return qb;
+  };
 
   /**
    * [description]
    * @param options
-   * @param user
    */
-  public async selectAll(
-    options: SelectChatsDto,
-    user: Partial<UserEntity>,
+  public async selectManyAndCount(
+    options: FindManyBracketsOptions<ChatEntity> = { loadEagerRelations: false },
   ): Promise<PaginationChatsDto> {
-    const { activeChatId } = options;
-    const qb = this.find(instanceToPlain(options)).andWhere(options.whereBrackets);
+    const qb = this.find(options).andWhere(options.whereBrackets);
+    const userId = options.userId;
 
-    /**
-     * Join last message
-     */
-    qb.leftJoinAndSelect('ChatEntity.lastMessage', 'ChatEntity_lastMessage');
+    qb.addSelect((sub) => {
+      return sub
+        .select('COUNT(ChatMessageEntity.id)')
+        .from(ChatMessageEntity, 'ChatMessageEntity')
+        .andWhere('ChatMessageEntity.chatId = ChatEntity.id')
+        .andWhere('ChatMessageEntity.readAt IS NULL')
+        .andWhere('ChatMessageEntity.ownerId != :userId', { userId });
+    }, '__new_messages_count');
+
+    qb.addSelect(this.selectLastMessageQuery, 'lastMessage');
 
     /**
      * Join current user
      */
     qb.innerJoin(
       'ChatEntity.participants',
-      'ChatEntity_participant_owner',
-      'ChatEntity_participant_owner.userId = :userId',
-      { userId: user.id },
+      'participant_owner',
+      'participant_owner.userId = :userId',
+      { userId },
     );
 
     /**
@@ -119,83 +85,75 @@ export class ChatsService extends CommonService<ChatEntity, PaginationChatsDto> 
     qb.leftJoinAndMapOne(
       'ChatEntity.participant',
       'ChatEntity.participants',
-      'ChatEntity_participant_other',
-      'ChatEntity_participant_other.userId != :userId AND ChatEntity.type = :chatTypePersonal',
-      { chatTypePersonal: ChatTypeEnum.PERSONAL },
-    )
-      .innerJoinAndSelect('ChatEntity_participant_other.user', 'ChatEntity_participant_other_user')
-      .leftJoinAndSelect(
-        'ChatEntity_participant_other_user.cover',
-        'ChatEntity_participant_other_user_cover',
-      );
+      'participant_other',
+      'participant_other.userId != :userId',
+    );
+    qb.innerJoinAndSelect('participant_other.user', 'participant_other_user');
+    qb.leftJoinAndSelect('participant_other_user.cover', 'participant_other_user_cover');
 
     /**
      * Order by active or/and udatedAt
      */
+    const activeChatId = options['activeChatId'];
     if (activeChatId)
       qb.addSelect(
         `(CASE "ChatEntity"."id" WHEN '${activeChatId}' THEN 1 ELSE 0 END)`,
-        'active',
-      ).orderBy('active', 'DESC');
+        'is_active',
+      ).orderBy('is_active', 'DESC');
     qb.addOrderBy('ChatEntity.updatedAt', 'DESC');
 
-    const [rows, count] = await qb.getManyAndCount().catch(() => {
-      throw new NotFoundException(ErrorTypeEnum.CHATS_NOT_FOUND);
-    });
-    return new PaginationChatsDto([await this.selectAllStats(rows, user), count]);
+    return qb
+      .getManyAndCount()
+      .then((data) => new this.paginationClass(data))
+      .catch((error) => {
+        throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
+      });
   }
 
   /**
    * [description]
-   *
    * @param conditions
-   * @param user
    * @param options
    */
-  public async selectOneEager(
+  public async selectOneWithOwner(
     conditions: FindOptionsWhere<ChatEntity>,
-    user: Partial<UserEntity>,
-    options: FindOneOptions<ChatEntity> = { loadEagerRelations: true },
+    options: FindManyBracketsOptions<ChatEntity> = { loadEagerRelations: true },
   ): Promise<ChatEntity> {
-    return (
-      this.find({ ...instanceToPlain(options), where: conditions })
-        /**
-         * Join last message
-         */
-        .leftJoinAndSelect('ChatEntity.lastMessage', 'ChatEntity_lastMessage')
-        /**
-         * Join owner user with cover
-         */
-        .leftJoinAndMapOne(
-          'ChatEntity.participant',
-          'ChatEntity.participants',
-          'ChatEntity_participant_owner',
-          'ChatEntity_participant_owner.userId = :userId AND ChatEntity.type = :chatTypePersonal',
-          { userId: user.id, chatTypePersonal: ChatTypeEnum.PERSONAL },
-        )
-        .innerJoinAndSelect(
-          'ChatEntity_participant_owner.user',
-          'ChatEntity_participant_owner_user',
-        )
-        .leftJoinAndSelect(
-          'ChatEntity_participant_owner_user.cover',
-          'ChatEntity_participant_owner_user_cover',
-        )
-        .getOneOrFail()
-        .then((data) => this.selectOneStats(data, user, true))
-        .catch(() => {
-          throw new NotFoundException(ErrorTypeEnum.CHAT_NOT_FOUND);
-        })
-    );
+    const qb = this.find({ ...instanceToPlain(options), where: conditions });
+    const userId = options.userId;
+
+    qb.addSelect((sub) => {
+      return sub
+        .select('COUNT(ChatMessageEntity.id)')
+        .from(ChatMessageEntity, 'ChatMessageEntity')
+        .andWhere('ChatMessageEntity.chatId = ChatEntity.id')
+        .andWhere('ChatMessageEntity.readAt IS NULL')
+        .andWhere('ChatMessageEntity.ownerId != :userId', { userId });
+    }, '__new_messages_count');
+
+    qb.addSelect(this.selectLastMessageQuery, 'lastMessage');
+
+    qb.leftJoinAndMapOne(
+      'ChatEntity.participant',
+      'ChatEntity.participants',
+      'participant_owner',
+      'participant_owner.userId = :userId',
+      { userId },
+    )
+      .innerJoinAndSelect('participant_owner.user', 'participant_owner_user')
+      .leftJoinAndSelect('participant_owner_user.cover', 'participant_owner_user_cover');
+
+    return qb.getOneOrFail().catch(() => {
+      throw new NotFoundException(ErrorTypeEnum.CHAT_NOT_FOUND);
+    });
   }
 
   /**
    * [description]
    * @param participantIds
    */
-  public async selectOneByParticipants(participantIds: string[]): Promise<ChatEntity> {
-    return this.repository
-      .createQueryBuilder('ChatEntity')
+  public async selectOneByParticipants(participantIds: string[]): Promise<Partial<ChatEntity>> {
+    return this.find()
       .select('ChatEntity.id')
       .innerJoin(
         'ChatEntity.participants',
@@ -203,33 +161,10 @@ export class ChatsService extends CommonService<ChatEntity, PaginationChatsDto> 
         'ChatEntity_participants.userId IN (:...participantIds)',
         { participantIds },
       )
-      .having(
-        `ARRAY_LENGTH(ARRAY_AGG(ChatEntity_participants.userId), 1) >= ${participantIds.length}`,
-      )
+      .having(`ARRAY_LENGTH(ARRAY_AGG(ChatEntity_participants.userId), 1) >= :participantsLength`, {
+        participantsLength: participantIds.length,
+      })
       .groupBy('ChatEntity.id')
       .getOne();
-  }
-
-  /**
-   * [description]
-   * @param conditions
-   * @param entityLike
-   * @param entityManager
-   */
-  public async update(
-    conditions: FindOptionsWhere<ChatEntity>,
-    entityLike: Partial<ChatEntity>,
-    entityManager?: EntityManager,
-  ): Promise<number> {
-    return this.repository.manager.transaction(async (chatEntityManager) => {
-      const transactionalEntityManager = entityManager ? entityManager : chatEntityManager;
-
-      return transactionalEntityManager
-        .update(ChatEntity, conditions, entityLike)
-        .then((data) => data.affected)
-        .catch(() => {
-          throw new ConflictException(ErrorTypeEnum.CHAT_ALREADY_EXIST);
-        });
-    });
   }
 }

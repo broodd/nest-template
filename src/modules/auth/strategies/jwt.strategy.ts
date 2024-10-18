@@ -2,12 +2,11 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 
+import { UserEntity } from 'src/modules/users/entities';
 import { ConfigService } from 'src/config';
 
-import { UserEntity } from '../../users/entities';
-
-import { JwtAccessTokenPayloadDto } from '../dto';
 import { AuthService } from '../services/auth.service';
+import { JwtAccessTokenPayloadDto } from '../dto';
 
 /**
  * [description]

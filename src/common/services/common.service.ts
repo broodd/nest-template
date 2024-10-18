@@ -1,19 +1,21 @@
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ConflictException, NotFoundException, Type } from '@nestjs/common';
-import { instanceToPlain } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { Stringifier, stringify } from 'csv-stringify';
+import { Transactional } from 'typeorm-transactional';
 import {
   SelectQueryBuilder,
   FindOptionsWhere,
   FindOptionsUtils,
   FindManyOptions,
   FindOneOptions,
-  EntityManager,
   DeepPartial,
   Repository,
 } from 'typeorm';
 
+import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { setQueryOrder } from '../helpers';
 import { CommonEntity } from '../entities';
 
@@ -36,62 +38,48 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   /**
    * [description]
    * @param entitiesLike
-   * @param entityManager
    */
-  public async createMany(
-    entitiesLike: DeepPartial<EntityClass>[],
-    entityManager?: EntityManager,
-  ): Promise<EntityClass[]> {
-    return this.repository.manager.transaction(async (runEntityManager) => {
-      const transactionalEntityManager = entityManager || runEntityManager;
-
-      const entities = this.repository.create(entitiesLike);
-      return transactionalEntityManager.save(entities).catch(() => {
-        throw new ConflictException(ErrorTypeEnum.INPUT_DATA_ERROR);
-      });
+  @Transactional()
+  public async createMany(entitiesLike: DeepPartial<EntityClass>[]): Promise<EntityClass[]> {
+    const entities = this.repository.create(entitiesLike);
+    return this.repository.save(entities).catch(() => {
+      throw new ConflictException(ErrorTypeEnum.INPUT_DATA_ERROR);
     });
   }
 
   /**
    * [description]
    * @param entityLike
-   * @param entityManager
    */
-  public async createOne(
-    entityLike: DeepPartial<EntityClass>,
-    entityManager?: EntityManager,
-  ): Promise<EntityClass> {
-    const { id } = await this.repository.manager.transaction(async (runEntityManager) => {
-      const transactionalEntityManager = entityManager || runEntityManager;
-
-      const entity = this.repository.create(entityLike);
-      return transactionalEntityManager.save(entity).catch((error) => {
-        throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
-      });
+  @Transactional()
+  public async createOne(entityLike: DeepPartial<EntityClass>): Promise<EntityClass> {
+    const entity = this.repository.create(entityLike);
+    return this.repository.save(entity).catch((error) => {
+      throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
     });
-    return this.selectOne(
-      { id } as FindOptionsWhere<EntityClass>,
-      { loadEagerRelations: true },
-      entityManager,
-    );
+  }
+
+  /**
+   * [description]
+   * @param entityLike
+   */
+  @Transactional()
+  public async createOneAndSelect(entityLike: DeepPartial<EntityClass>): Promise<EntityClass> {
+    const { id } = await this.createOne(entityLike);
+    return this.selectOne({ id } as FindOptionsWhere<EntityClass>, { loadEagerRelations: true });
   }
 
   /**
    * [description]
    * @param optionsOrConditions
-   * @param entityManager
    */
   public find(
     optionsOrConditions: FindManyOptions<EntityClass> = {},
-    entityManager?: EntityManager,
   ): SelectQueryBuilder<EntityClass> {
     const metadata = this.repository.metadata;
     const alias =
       FindOptionsUtils.extractFindManyOptionsAlias(optionsOrConditions) || metadata.name;
-
-    const qb = entityManager
-      ? entityManager.createQueryBuilder(this.entityClass, alias)
-      : this.repository.createQueryBuilder(alias);
+    const qb = this.repository.createQueryBuilder(alias);
 
     qb.setFindOptions(optionsOrConditions);
 
@@ -101,10 +89,7 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
     setQueryOrder(qb, optionsOrConditions['asc'], 'ASC');
     setQueryOrder(qb, optionsOrConditions['desc'], 'DESC');
 
-    if (
-      !FindOptionsUtils.isFindManyOptions(optionsOrConditions) ||
-      optionsOrConditions.loadEagerRelations !== false
-    ) {
+    if (optionsOrConditions.loadEagerRelations !== false) {
       FindOptionsUtils.joinEagerRelations(qb, alias, metadata);
 
       /**
@@ -119,15 +104,14 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   /**
    * [description]
    * @param options
-   * @param entityManager
    */
   public async selectManyAndCount(
     options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: false },
-    entityManager?: EntityManager,
   ): Promise<PaginationClass> {
-    const qb = this.find(options, entityManager);
+    const qb = this.find(options);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
-    return Promise.all([qb.getMany(), qb.getCount()])
+    return qb
+      .getManyAndCount()
       .then((data) => new this.paginationClass(data))
       .catch((error) => {
         throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
@@ -137,13 +121,11 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   /**
    * [description]
    * @param options
-   * @param entityManager
    */
   public async selectMany(
     options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: false },
-    entityManager?: EntityManager,
   ): Promise<EntityClass[]> {
-    const qb = this.find(options, entityManager);
+    const qb = this.find(options);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
     return qb.getMany().catch((error) => {
       throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
@@ -154,14 +136,12 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * [description]
    * @param conditions
    * @param options
-   * @param entityManager
    */
   public async selectOne(
-    conditions: FindOneOptions<EntityClass>['where'],
+    conditions: FindManyBracketsOptions<EntityClass>['where'],
     options: FindOneOptions<EntityClass> = { loadEagerRelations: false },
-    entityManager?: EntityManager,
   ): Promise<EntityClass> {
-    return this.find({ ...instanceToPlain(options), where: conditions }, entityManager)
+    return this.find({ ...instanceToPlain(options), where: conditions })
       .getOneOrFail()
       .catch((error) => {
         throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
@@ -172,72 +152,64 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * [description]
    * @param conditions
    * @param entityLike
-   * @param entityManager
    */
+  @Transactional()
   public async updateOne(
     conditions: FindOneOptions<EntityClass>['where'],
     entityLike: DeepPartial<EntityClass>,
-    entityManager?: EntityManager,
   ): Promise<EntityClass> {
-    const { id } = await this.repository.manager.transaction(async (runEntityManager) => {
-      const transactionalEntityManager = entityManager || runEntityManager;
-
-      const mergeIntoEntity = await this.selectOne(
-        conditions,
-        { loadEagerRelations: false },
-        transactionalEntityManager,
-      );
-      const entity = this.repository.merge(mergeIntoEntity, entityLike);
-      return transactionalEntityManager.save(entity).catch((error) => {
-        throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
-      });
+    const mergeIntoEntity = await this.selectOne(conditions, { loadEagerRelations: false });
+    const entity = this.repository.merge(mergeIntoEntity, entityLike);
+    return this.repository.save(entity).catch((error) => {
+      throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
     });
-    return this.selectOne(
-      { id } as FindOptionsWhere<EntityClass>,
-      { loadEagerRelations: true },
-      entityManager,
-    );
   }
 
   /**
    * [description]
    * @param conditions
    * @param entityLike
-   * @param entityManager
    */
+  @Transactional()
   public async updateOneAndSelect(
     conditions: FindOneOptions<EntityClass>['where'],
     entityLike: DeepPartial<EntityClass>,
-    entityManager?: EntityManager,
   ): Promise<EntityClass> {
-    const { id } = await this.updateOne(conditions, entityLike, entityManager);
-    return this.selectOne(
-      { id } as FindOptionsWhere<EntityClass>,
-      { loadEagerRelations: true },
-      entityManager,
-    );
+    const { id } = await this.updateOne(conditions, entityLike);
+    return this.selectOne({ id } as FindOptionsWhere<EntityClass>, { loadEagerRelations: true });
   }
 
   /**
    * [description]
    * @param conditions
-   * @param entityManager
+   * @param entityLike
    */
-  public async deleteOne(
-    conditions: FindOneOptions<EntityClass>['where'],
-    entityManager?: EntityManager,
-  ): Promise<EntityClass> {
-    return this.repository.manager.transaction(async (runEntityManager) => {
-      const transactionalEntityManager = entityManager || runEntityManager;
-
-      const entity = await this.selectOne(
-        conditions,
-        { loadEagerRelations: false },
-        transactionalEntityManager,
-      );
-      return transactionalEntityManager.remove(entity).catch((error) => {
-        throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
+  @Transactional()
+  public async update(
+    conditions: FindOptionsWhere<EntityClass>,
+    entityLike: QueryDeepPartialEntity<EntityClass>,
+  ): Promise<number> {
+    return this.repository
+      .createQueryBuilder()
+      .update()
+      .set(entityLike)
+      .where(conditions)
+      .execute()
+      .then((data) => data.affected)
+      .catch(() => {
+        throw new ConflictException(ErrorTypeEnum.INPUT_DATA_ERROR);
       });
+  }
+
+  /**
+   * [description]
+   * @param conditions
+   */
+  @Transactional()
+  public async deleteOne(conditions: FindOneOptions<EntityClass>['where']): Promise<EntityClass> {
+    const entity = await this.selectOne(conditions, { loadEagerRelations: false });
+    return this.repository.remove(entity).catch((error) => {
+      throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
     });
   }
 
@@ -261,6 +233,7 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
     return Object.entries(raw).reduce((acc, [key, value]) => {
       const splited = key.split('_');
       splited.reduce((field, el, index) => {
+        if (el === '') el = '_';
         if (index === 0) return acc;
         if (index === splited.length - 1) field[el] = value;
         else if (field[el] === undefined) field[el] = {};
@@ -269,5 +242,46 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
 
       return acc;
     }, {});
+  }
+
+  /**
+   * [description]
+   * @param mockFields
+   * @param qb
+   */
+  public async streamExportCSV<T, U>(
+    mockFields: T,
+    qb: SelectQueryBuilder<U>,
+  ): Promise<Stringifier> {
+    const columns = Object.entries(mockFields);
+    const qbStream = await qb.stream().catch(() => {
+      throw new NotFoundException(ErrorTypeEnum.NOT_FOUND_ERROR);
+    });
+
+    const stringifier = stringify({
+      bom: true,
+      header: true,
+      delimiter: ';',
+      cast: { date: (value) => new Date(value).toUTCString() },
+      columns: columns.map(([exportKey, dbKey]) => ({
+        header: exportKey,
+        key: dbKey,
+      })),
+    });
+
+    qbStream
+      .on('data', (raw) => {
+        const data = this.fromRawToEntity(raw);
+        const entity = plainToInstance(this.entityClass, data);
+        return stringifier.write(entity);
+      })
+      .on('error', (error) => {
+        console.error(error);
+        stringifier.end();
+        throw new NotFoundException(ErrorTypeEnum.NOT_FOUND_ERROR);
+      })
+      .on('end', () => stringifier.end());
+
+    return stringifier;
   }
 }

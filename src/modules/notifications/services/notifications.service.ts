@@ -1,17 +1,16 @@
-import { Repository, DeepPartial, UpdateResult, EntityManager, FindOptionsWhere } from 'typeorm';
-import { BaseMessage, Message, Notification } from 'firebase-admin/messaging';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
+
+import { BaseMessage, Message, Notification } from 'firebase-admin/messaging';
 import { messaging } from 'firebase-admin';
 
 import { CommonService } from 'src/common/services';
-import { ErrorTypeEnum } from 'src/common/enums';
 
 import { UserNotificationTokensService, UsersService } from 'src/modules/users/services';
 import { UserNotificationTokenEntity } from 'src/modules/users/entities';
 
 import { PaginationNotificationsDto } from '../dto';
-import { NotificationsStatusEnum } from '../enums';
 import { NotificationEntity } from '../entities';
 
 /**
@@ -39,32 +38,10 @@ export class NotificationsService extends CommonService<
 
   /**
    * [description]
-   * @param conditions
-   * @param entityLike
-   * @param entityManager
-   */
-  public async updateMany(
-    conditions: FindOptionsWhere<NotificationEntity> = { status: NotificationsStatusEnum.UNREAD },
-    entityLike: DeepPartial<NotificationEntity> = { status: NotificationsStatusEnum.READ },
-    entityManager?: EntityManager,
-  ): Promise<UpdateResult> {
-    return this.repository.manager.transaction((notificationEntityManager) => {
-      const transactionalEntityManager = entityManager ? entityManager : notificationEntityManager;
-
-      return transactionalEntityManager
-        .update(NotificationEntity, conditions, entityLike)
-        .catch(() => {
-          throw new NotFoundException(ErrorTypeEnum.NOT_FOUND_ERROR);
-        });
-    });
-  }
-
-  /**
-   * [description]
    * @param entity
    */
   public generateNotificationProps(entity: Partial<NotificationEntity>): BaseMessage {
-    const notification: Notification = { title: entity.title };
+    const notification: Notification = { title: entity.title, body: entity.body };
     const data = { json: JSON.stringify(entity) };
     return { notification, data };
   }
@@ -87,7 +64,8 @@ export class NotificationsService extends CommonService<
       (acc, current) => (acc.concat(current.notificationTokens.map((el) => el.token)), acc),
       [],
     );
-    return messaging().sendMulticast({
+    if (!tokens.length) return;
+    return messaging().sendEachForMulticast({
       ...this.generateNotificationProps(data),
       tokens,
     });
@@ -121,7 +99,7 @@ export class NotificationsService extends CommonService<
       }
       return acc;
     }, []);
-    return messaging().sendAll(messages);
+    return messaging().sendEach(messages);
   }
 
   /**
@@ -137,7 +115,9 @@ export class NotificationsService extends CommonService<
     const tokens = await this.userNotificationTokensService
       .selectMany({ where: conditions })
       .then((data) => data.map((el) => el.token));
-    return messaging().sendMulticast({
+
+    if (!tokens.length) return;
+    return messaging().sendEachForMulticast({
       ...this.generateNotificationProps(entity),
       tokens,
     });

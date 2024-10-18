@@ -15,4 +15,4 @@ export const AUTH_PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z
 /**
  * For generate password by regex
  */
-export const AUTH_PASSWORD_REGEX_GEN = /([A-Z][a-z][0-9]{2,3}){2}/;
+export const AUTH_PASSWORD_REGEX_GENERATOR = /([A-Z][a-z][0-9]{2,3}){2}/;

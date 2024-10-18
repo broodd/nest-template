@@ -1,33 +1,39 @@
-import { PaginationMixin } from 'src/common/dto';
+import { ApiProperty } from '@nestjs/swagger';
+
+import { PaginationDto } from 'src/common/dto';
 
 import { UserEntity, UserRefreshTokenEntity } from '../entities';
 
 /**
  * [description]
  */
-export class PaginationUsersDto extends PaginationMixin(UserEntity) {
+export class PaginationUsersDto extends PaginationDto<UserEntity> {
   /**
-   * [description]
-   * @param result
-   * @param count
+   * Result of the selection by the specified parameters.
    */
-  constructor([result, count]: [UserEntity[], number]) {
-    super();
-    Object.assign(this, { result, count });
-  }
+  @ApiProperty({ type: () => [UserEntity] })
+  public readonly result: UserEntity[];
+
+  /**
+   * Total number of records.
+   */
+  @ApiProperty()
+  public readonly count: number;
 }
 
 /**
  * [description]
  */
-export class PaginationUsersRefreshTokensDto extends PaginationMixin(UserRefreshTokenEntity) {
+export class PaginationUsersRefreshTokensDto extends PaginationDto<UserRefreshTokenEntity> {
   /**
-   * [description]
-   * @param result
-   * @param count
+   * Result of the selection by the specified parameters.
    */
-  constructor([result, count]: [UserRefreshTokenEntity[], number]) {
-    super();
-    Object.assign(this, { result, count });
-  }
+  @ApiProperty({ type: () => [UserRefreshTokenEntity] })
+  public readonly result: UserRefreshTokenEntity[];
+
+  /**
+   * Total number of records.
+   */
+  @ApiProperty()
+  public readonly count: number;
 }

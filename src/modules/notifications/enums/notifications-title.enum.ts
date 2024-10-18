@@ -1,9 +1,12 @@
+import { template } from 'src/common/helpers';
+
 /**
  * [description]
+ * @example NotificationsTitleEnum.REMINDER({ name: 'drink water!' }) -> 'New reminder drink water!'
  */
-export enum NotificationsTitleEnum {
+export const NotificationsTitleEnum = {
   /**
    * @param name
    */
-  NOTIFICATION = 'name: %s',
-}
+  REMINDER: template`New reminder ${'name'}`,
+};

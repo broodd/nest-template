@@ -1,84 +1,32 @@
-import { NotFoundException, ConflictException, Injectable } from '@nestjs/common';
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
-import {
-  SelectQueryBuilder,
-  FindOptionsUtils,
-  FindOptionsWhere,
-  FindManyOptions,
-  FindOneOptions,
-  EntityManager,
-  Repository,
-} from 'typeorm';
+import { Repository } from 'typeorm';
 
+import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { PaginationChatParticipantsDto, PaginationChatsDto } from '../dto';
+import { PaginationChatParticipantsDto } from '../dto/chat-participants';
 import { ChatEntity, ChatParticipantEntity } from '../entities';
+import { FindManyBracketsOptions } from 'src/common/interfaces';
 
 /**
  * [description]
  */
 @Injectable()
-export class ChatParticipantsService {
+export class ChatParticipantsService extends CommonService<
+  ChatParticipantEntity,
+  PaginationChatParticipantsDto
+> {
   /**
    * [description]
-   * @param chatParticipantEntityRepository
+   * @param repository
    */
   constructor(
     @InjectRepository(ChatParticipantEntity)
-    private readonly chatParticipantEntityRepository: Repository<ChatParticipantEntity>,
-  ) {}
-
-  /**
-   * [description]
-   * @param entityLike
-   * @param entityManager
-   */
-  public async createOne(
-    entityLike: Partial<ChatParticipantEntity>,
-    entityManager?: EntityManager,
-  ): Promise<ChatParticipantEntity> {
-    const { id } = await this.chatParticipantEntityRepository.manager.transaction(
-      async (chatParticipantEntityManager) => {
-        const transactionalEntityManager = entityManager
-          ? entityManager
-          : chatParticipantEntityManager;
-
-        const entity = this.chatParticipantEntityRepository.create(entityLike);
-        return transactionalEntityManager.save(entity).catch(() => {
-          throw new ConflictException(ErrorTypeEnum.CHAT_PARTICIPANT_ALREADY_EXIST);
-        });
-      },
-    );
-    return this.selectOne({ id }, { loadEagerRelations: true });
-  }
-
-  /**
-   *  [description]
-   * @param optionsOrConditions
-   */
-  public find(
-    optionsOrConditions?: FindManyOptions<ChatParticipantEntity>,
-  ): SelectQueryBuilder<ChatParticipantEntity> {
-    const metadata = this.chatParticipantEntityRepository.metadata;
-    const qb = this.chatParticipantEntityRepository.createQueryBuilder(
-      FindOptionsUtils.extractFindManyOptionsAlias(optionsOrConditions) || metadata.name,
-    );
-
-    if (
-      !FindOptionsUtils.isFindManyOptions(optionsOrConditions) ||
-      optionsOrConditions.loadEagerRelations !== false
-    ) {
-      FindOptionsUtils.joinEagerRelations(qb, qb.alias, metadata);
-
-      /**
-       * Place for common relation
-       * @example qb.leftJoinAndSelect('ChatParticipantEntity.relation_field', 'ChatParticipantEntity_relation_field')
-       */
-    }
-
-    return qb.setFindOptions(optionsOrConditions);
+    public readonly repository: Repository<ChatParticipantEntity>,
+  ) {
+    super(ChatParticipantEntity, repository, PaginationChatParticipantsDto);
   }
 
   /**
@@ -86,12 +34,11 @@ export class ChatParticipantsService {
    * @param options
    */
   public async selectIds(
-    options: FindManyOptions<ChatParticipantEntity> = {
-      loadEagerRelations: false,
-      select: ['userId'],
-    },
+    options: FindManyBracketsOptions<ChatParticipantEntity>,
   ): Promise<string[]> {
-    return this.find(instanceToPlain(options))
+    return this.find(
+      instanceToPlain({ ...options, select: { userId: true }, loadEagerRelations: false }),
+    )
       .getMany()
       .then((data) => data.map((value) => value.userId))
       .catch(() => {
@@ -101,42 +48,11 @@ export class ChatParticipantsService {
 
   /**
    * [description]
-   * @param options
-   */
-  public async selectAll(
-    options: FindManyOptions<ChatParticipantEntity> = { loadEagerRelations: false },
-  ): Promise<PaginationChatsDto> {
-    return this.find(instanceToPlain(options))
-      .getManyAndCount()
-      .then((data) => new PaginationChatParticipantsDto(data))
-      .catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANTS_NOT_FOUND);
-      });
-  }
-
-  /**
-   * [description]
-   * @param conditions
-   * @param options
-   */
-  public async selectOne(
-    conditions: FindOptionsWhere<ChatParticipantEntity>,
-    options: FindOneOptions<ChatParticipantEntity> = { loadEagerRelations: false },
-  ): Promise<ChatParticipantEntity> {
-    return this.find({ ...instanceToPlain(options), where: conditions })
-      .getOneOrFail()
-      .catch(() => {
-        throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANT_NOT_FOUND);
-      });
-  }
-
-  /**
-   * [description]
    * @param participantIds
+   * @deprecated
    */
   public async selectOneByParticipants(participantIds: string[]): Promise<Partial<ChatEntity>> {
-    return this.chatParticipantEntityRepository
-      .createQueryBuilder('ChatParticipantEntity')
+    return this.find()
       .select('ChatParticipantEntity.chatId', 'id')
       .andWhere('ChatParticipantEntity.userId IN (:...participantIds)', { participantIds })
       .having(
@@ -144,54 +60,5 @@ export class ChatParticipantsService {
       )
       .groupBy('ChatParticipantEntity.chatId')
       .getRawOne();
-  }
-
-  /**
-   * [description]
-   * @param conditions
-   * @param entityLike
-   * @param entityManager
-   */
-  public async updateOne(
-    conditions: FindOptionsWhere<ChatParticipantEntity>,
-    entityLike: Partial<ChatParticipantEntity>,
-    entityManager?: EntityManager,
-  ): Promise<ChatParticipantEntity> {
-    return this.chatParticipantEntityRepository.manager.transaction(
-      async (chatParticipantEntityManager) => {
-        const transactionalEntityManager = entityManager
-          ? entityManager
-          : chatParticipantEntityManager;
-
-        const mergeIntoEntity = await this.selectOne(conditions);
-        const entity = this.chatParticipantEntityRepository.merge(mergeIntoEntity, entityLike);
-        return transactionalEntityManager.save(entity).catch(() => {
-          throw new ConflictException(ErrorTypeEnum.CHAT_PARTICIPANT_ALREADY_EXIST);
-        });
-      },
-    );
-  }
-
-  /**
-   * [description]
-   * @param conditions
-   * @param entityManager
-   */
-  public async deleteOne(
-    conditions: FindOptionsWhere<ChatParticipantEntity>,
-    entityManager?: EntityManager,
-  ): Promise<ChatParticipantEntity> {
-    return this.chatParticipantEntityRepository.manager.transaction(
-      async (chatParticipantEntityManager) => {
-        const transactionalEntityManager = entityManager
-          ? entityManager
-          : chatParticipantEntityManager;
-
-        const entity = await this.selectOne(conditions);
-        return transactionalEntityManager.remove(entity).catch(() => {
-          throw new NotFoundException(ErrorTypeEnum.CHAT_PARTICIPANT_NOT_FOUND);
-        });
-      },
-    );
   }
 }

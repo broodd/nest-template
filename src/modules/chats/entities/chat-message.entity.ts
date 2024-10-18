@@ -1,66 +1,66 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import {
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-  CreateDateColumn,
-  JoinColumn,
-  ManyToOne,
-  Column,
-  Entity,
-} from 'typeorm';
+import { JoinColumn, ManyToOne, Column, Entity } from 'typeorm';
 
-import { FileEntity } from 'src/modules/files/entities/file.entity';
+import { CommonEntity } from 'src/common/entities';
+
+import { StoryEntity } from 'src/modules/posts/entities';
+import { FileEntity } from 'src/modules/files/entities';
 import { UserEntity } from 'src/modules/users/entities';
 
-import { ChatMessageStatusEnum, ChatMessageTypeEnum } from '../enums';
 import { ChatEntity } from './chat.entity';
 
 /**
  * [description]
  */
 @Entity('chat_messages')
-export class ChatMessageEntity {
+export class ChatMessageEntity extends CommonEntity {
   /**
    * [description]
    */
-  @ApiProperty({ readOnly: true })
-  @PrimaryGeneratedColumn('uuid')
-  public readonly id: string;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ enum: ChatMessageTypeEnum, default: ChatMessageTypeEnum.TEXT })
-  @Column({ type: 'enum', enum: ChatMessageTypeEnum, default: ChatMessageTypeEnum.TEXT })
-  public readonly type: ChatMessageTypeEnum;
-
-  /**
-   * [description]
-   */
-
-  @ApiProperty({ enum: ChatMessageStatusEnum, default: ChatMessageStatusEnum.SENT })
-  @Column({ type: 'enum', enum: ChatMessageStatusEnum, default: ChatMessageStatusEnum.SENT })
-  public readonly status: ChatMessageStatusEnum;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ maxLength: 6e4, nullable: true })
-  @Column({ type: 'varchar', length: 6e4, nullable: true })
-  public readonly text: string;
+  @ApiProperty({ maxLength: 5120, nullable: true })
+  @Column({ type: 'varchar', length: 5120, nullable: true })
+  public readonly text?: string;
 
   /**
    * [description]
    */
   @JoinColumn()
-  @ApiProperty({ type: String, example: 'URL' })
+  @ApiProperty()
   @ManyToOne(() => FileEntity, {
-    onDelete: 'CASCADE',
+    onDelete: 'SET NULL',
     nullable: true,
-    cascade: true,
     eager: true,
   })
-  public readonly file: Partial<FileEntity>;
+  public readonly file?: Partial<FileEntity>;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @Column({ type: 'timestamptz', nullable: true })
+  public readonly readAt?: Date;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @Column({ type: 'uuid', nullable: true })
+  public readonly storyId?: string;
+
+  /**
+   * [description]
+   */
+  @JoinColumn()
+  @ApiHideProperty()
+  @ManyToOne(() => StoryEntity, { onDelete: 'CASCADE', nullable: false })
+  public readonly story?: Partial<StoryEntity>;
+
+  /**
+   * [description]
+   */
+  @ApiProperty()
+  @Column({ type: 'uuid', nullable: false })
+  public readonly chatId: string;
 
   /**
    * [description]
@@ -73,37 +73,15 @@ export class ChatMessageEntity {
   /**
    * [description]
    */
-  @JoinColumn()
-  @ApiHideProperty()
-  @ManyToOne(() => ChatMessageEntity, { onDelete: 'CASCADE', nullable: true })
-  public readonly reply: Partial<ChatMessageEntity>;
+  @ApiProperty()
+  @Column({ type: 'uuid', nullable: false })
+  public readonly ownerId: string;
 
   /**
    * [description]
    */
   @JoinColumn()
-  @ApiHideProperty()
+  @ApiProperty()
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE', nullable: false })
   public readonly owner: Partial<UserEntity>;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @CreateDateColumn({
-    readonly: true,
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly createdAt: Date;
-
-  /**
-   * [description]
-   */
-  @ApiProperty({ readOnly: true })
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  public readonly updatedAt: Date;
 }

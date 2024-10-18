@@ -34,7 +34,7 @@ export class SocketsService {
    * [description]
    * @param userIds
    */
-  public selectAllIds(userIds: string[]): string[] {
+  public selectManyIds(userIds: string[]): string[] {
     return userIds.reduce<string[]>((acc, current) => acc.concat(this.selectOneIds(current)), []);
   }
 
