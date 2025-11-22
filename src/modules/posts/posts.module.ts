@@ -5,26 +5,26 @@ import { ChatsModule } from '../chats';
 import { UsersModule } from '../users';
 
 import {
-  PostCommentEntity,
-  PostCommentLikeEntity,
-  PostEntity,
-  PostLikeEntity,
-  StoryEntity,
-} from './entities';
-import {
   PostCommentLikesController,
   PostCommentsController,
   PostLikesController,
-  PostsController,
   StoriesController,
+  PostsController,
 } from './controllers';
 import {
   PostCommentLikesService,
   PostCommentsService,
   PostLikesService,
-  PostsService,
   StoriesService,
+  PostsService,
 } from './services';
+import {
+  PostCommentLikeEntity,
+  PostCommentEntity,
+  PostLikeEntity,
+  StoryEntity,
+  PostEntity,
+} from './entities';
 
 /**
  * [description]

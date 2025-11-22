@@ -1,6 +1,7 @@
 import { ValidateNested } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 import { ID } from 'src/common/dto';
 

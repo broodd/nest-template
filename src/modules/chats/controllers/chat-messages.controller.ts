@@ -1,4 +1,3 @@
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -8,6 +7,7 @@ import {
   Query,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
@@ -15,7 +15,7 @@ import { ID } from 'src/common/dto';
 import { UserEntity } from 'src/modules/users/entities';
 import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { ChatMessagesService, ChatParticipantsService } from '../services';
+import { ChatParticipantsService, ChatMessagesService } from '../services';
 import { SelectChatMessagesDto } from '../dto/chat-messages';
 import { ChatMessageEntity } from '../entities';
 

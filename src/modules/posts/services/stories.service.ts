@@ -1,5 +1,6 @@
 import { SelectQueryBuilder, FindOptionsUtils, FindManyOptions, Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
@@ -7,11 +8,11 @@ import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
 import { RelationshipEntity } from 'src/modules/relationships/entities';
+import { PaginationUsersDto } from 'src/modules/users/dto';
 import { UsersService } from 'src/modules/users/services';
 
 import { PaginationStoriesDto } from '../dto/stories';
 import { StoryEntity } from '../entities';
-import { PaginationUsersDto } from 'src/modules/users/dto';
 
 /**
  * [description]
@@ -33,17 +34,12 @@ export class StoriesService extends CommonService<StoryEntity, PaginationStories
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
-  public find(
-    optionsOrConditions: FindManyOptions<StoryEntity> = {},
-  ): SelectQueryBuilder<StoryEntity> {
-    const qb = super.find(optionsOrConditions);
+  public find(options: FindManyOptions<StoryEntity> = {}): SelectQueryBuilder<StoryEntity> {
+    const qb = super.find(options);
 
-    if (
-      !FindOptionsUtils.isFindManyOptions(optionsOrConditions) ||
-      optionsOrConditions.loadEagerRelations !== false
-    ) {
+    if (!FindOptionsUtils.isFindManyOptions(options) || options.loadEagerRelations !== false) {
       qb.leftJoinAndSelect('StoryEntity.owner', 'owner');
       qb.leftJoinAndSelect('owner.cover', 'owner_cover');
     }
@@ -58,7 +54,7 @@ export class StoriesService extends CommonService<StoryEntity, PaginationStories
   public async selectManyAndCount(
     options: FindManyBracketsOptions<StoryEntity> = { loadEagerRelations: false },
   ): Promise<PaginationStoriesDto> {
-    const userId = options.userId;
+    const userId = options._userId;
     const qb = this.find(options);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
 
@@ -91,7 +87,7 @@ export class StoriesService extends CommonService<StoryEntity, PaginationStories
   public async selectManyAndCountByFollowings(
     options: FindManyBracketsOptions<StoryEntity> = { loadEagerRelations: false },
   ): Promise<PaginationUsersDto> {
-    const userId = options.userId;
+    const userId = options._userId;
     const qb = this.usersServices.find(options as unknown);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
 

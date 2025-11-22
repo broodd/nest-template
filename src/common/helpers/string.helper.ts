@@ -1,7 +1,9 @@
+import * as Handlebars from 'handlebars';
+
 /**
  * [description]
  * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
- * @example template`Hello ${"foo"}!`({ foo: "World" }) -> "Hello World!"
+ * @example template`Hello ${"foo"}!`({ foo: "World" }) => "Hello World!"
  */
 export const template = (strings, ...keys): ((dict: Record<string, string>) => string) => {
   return (dict: Record<string, string>) => {
@@ -15,12 +17,10 @@ export const template = (strings, ...keys): ((dict: Record<string, string>) => s
 
 /**
  * [description]
- * @param template
- * @param values
- * @example templateReplace('Dynamic :variable', { variable: '555' }) -> "Dynamic 555"
+ * @param input
+ * @param context
  */
-export const templateReplace = (template, values): string => {
-  return template.replace(/:([a-zA-Z0-9_]+)/g, (match, key) => {
-    return values[key] !== undefined ? values[key] : match;
-  });
+export const handlebarsCompile = (input: string, context?: Record<string, any>): string => {
+  const template = Handlebars.compile(input);
+  return template(context);
 };

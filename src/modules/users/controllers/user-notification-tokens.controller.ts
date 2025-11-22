@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -9,17 +8,18 @@ import {
   Post,
   Body,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 
 import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { UserEntity, UserNotificationTokenEntity } from '../entities';
-import { UserNotificationTokensService } from '../services';
 import {
   CreateUserNotificationTokenDto,
   DeleteUserNotificationTokenDto,
 } from '../dto/user-notification-tokens';
+import { UserNotificationTokenEntity, UserEntity } from '../entities';
+import { UserNotificationTokensService } from '../services';
 
 /**
  * [description]

@@ -2,13 +2,6 @@
  * [description]
  */
 export enum TemplateSubjectEnum {
-  /**
-   * [description]
-   */
-  CREATE_USER_CONFIRMATION = 'CREATE_USER_CONFIRMATION',
-
-  /**
-   * [description]
-   */
-  RESET_PASSWORD = 'RESET_PASSWORD',
+  SING_UP_CODE = 'Email Verification',
+  RESET_PASSWORD = 'Reset Your Password',
 }

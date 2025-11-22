@@ -1,6 +1,5 @@
 # compiled output
 /dist
-/public
 /node_modules
 
 # Logs
@@ -44,4 +43,3 @@ bpn.env
 /postgres_data
 /temp
 /static/*
-!/static/.gitkeep

@@ -1,7 +1,9 @@
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { randomBytes } from 'crypto';
+
+import { FindOptionsWhere, Repository } from 'typeorm';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 
 import { CommonService } from 'src/common/services';
 import { hash } from 'src/common/helpers';

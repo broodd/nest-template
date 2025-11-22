@@ -1,24 +1,27 @@
 import { ISendMailOptions } from '@nestjs-modules/mailer';
 
-import { TemplateNameEnum, TemplateSubjectEnum } from '../enums';
+import { TemplateSubjectEnum, TemplateNameEnum } from '../enums';
 
 /**
  * [description]
  */
 export type MailType = Pick<Required<ISendMailOptions>, 'subject'> &
   Omit<ISendMailOptions, 'to'> & {
-    to: string | string[];
+    to: string[];
     template: TemplateNameEnum;
   };
 
 /**
  * [description]
  */
-export type TemplatedMailResetPasswordType = MailType & {
-  subject: TemplateSubjectEnum.RESET_PASSWORD;
-  template: TemplateNameEnum.RESET_PASSWORD;
-  context: {
-    code: string;
-    url: string;
-  };
+export type BaseLayoutOptionsType = {
+  template?: TemplateNameEnum;
+  subject?: TemplateSubjectEnum;
+
+  title: string;
+  name?: string;
+  text: string;
+
+  buttonText?: string;
+  buttonUrl?: string;
 };

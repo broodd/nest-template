@@ -1,10 +1,19 @@
-import { IsArray, IsString, IsNotEmpty, IsOptional, Min, Max, MaxLength } from 'class-validator';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
+import {
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsString,
+  IsArray,
+  Allow,
+  Max,
+  Min,
+} from 'class-validator';
+import { Transform, Exclude, Expose } from 'class-transformer';
+import { FindOneOptions } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
-import { dotNotation } from 'src/common/helpers';
 
 import { FindOneOptionsDto } from '../find-one-options';
 
@@ -50,19 +59,17 @@ export class FindManyOptionsDto<Entity>
    * Getter to form an object of order. Available after calling instanceToPlain
    */
   @Expose({ toPlainOnly: true })
-  public get order(): FindManyOptions['order'] {
+  public get order(): Record<string, 'ASC' | 'DESC'> {
     return Object.assign(
       {},
-      this.asc &&
-        dotNotation(
-          this.asc.filter((key) => !key.startsWith('__')),
-          'ASC',
-        ),
-      this.desc &&
-        dotNotation(
-          this.desc.filter((key) => !key.startsWith('__')),
-          'DESC',
-        ),
+      this.asc?.reduce<Record<string, 'ASC' | 'DESC'>>((acc, key) => {
+        if (!key.startsWith('__') && !key.includes('.')) acc[key] = 'ASC';
+        return acc;
+      }, {}),
+      this.desc?.reduce<Record<string, 'ASC' | 'DESC'>>((acc, key) => {
+        if (!key.startsWith('__') && !key.includes('.')) acc[key] = 'DESC';
+        return acc;
+      }, {}),
     );
   }
 
@@ -108,4 +115,10 @@ export class FindManyOptionsDto<Entity>
   public get whereBrackets(): FindOneOptions['where'] {
     return {};
   }
+
+  /**
+   * Flag about its
+   */
+  @Allow()
+  public isManyOptions = true;
 }

@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { config } from 'dotenv';
-import fs from 'fs';
 import { join } from 'path';
+import fs from 'fs';
+
+import { config } from 'dotenv';
+
+import { Injectable } from '@nestjs/common';
 
 import { ConfigMode } from './interfaces/config.interface';
 

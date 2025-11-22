@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -7,18 +6,17 @@ import {
   Delete,
   Param,
   Query,
-  Post,
-  Get,
-  Body,
   Patch,
+  Post,
+  Body,
+  Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ID } from 'src/common/dto';
 
 import { JwtAuthGuard } from '../../auth/guards';
 
-import { GroupsService } from '../services';
-import { GroupEntity } from '../entities';
 import {
   PaginationGroupsDto,
   SelectGroupsDto,
@@ -26,6 +24,8 @@ import {
   SelectGroupDto,
   UpdateGroupDto,
 } from '../dto';
+import { GroupsService } from '../services';
+import { GroupEntity } from '../entities';
 
 /**
  * [description]

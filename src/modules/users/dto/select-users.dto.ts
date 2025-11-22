@@ -1,11 +1,12 @@
-import { IsEnum, IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
-import { Brackets, FindOneOptions, ILike, In } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, MaxLength, MinLength, IsEnum, IsUUID } from 'class-validator';
+import { FindOneOptions, Brackets, ILike, In } from 'typeorm';
 import { Transform } from 'class-transformer';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 
-import { UserRoleEnum, UserStatusEnum } from '../enums';
+import { UserStatusEnum, UserRoleEnum } from '../enums';
 import { UserEntity } from '../entities';
 
 /**

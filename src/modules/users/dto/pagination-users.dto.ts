@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { PaginationDto } from 'src/common/dto';
 
-import { UserEntity, UserRefreshTokenEntity } from '../entities';
+import { UserRefreshTokenEntity, UserEntity } from '../entities';
 
 /**
  * [description]

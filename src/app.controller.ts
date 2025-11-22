@@ -1,15 +1,15 @@
-import { Transport, RedisOptions } from '@nestjs/microservices';
+import {
+  MicroserviceHealthIndicator,
+  TypeOrmHealthIndicator,
+  MemoryHealthIndicator,
+  DiskHealthIndicator,
+  HealthCheckService,
+  HealthCheckResult,
+  HealthCheck,
+} from '@nestjs/terminus';
+import { RedisOptions, Transport } from '@nestjs/microservices';
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import {
-  HealthCheck,
-  HealthCheckResult,
-  HealthCheckService,
-  DiskHealthIndicator,
-  MemoryHealthIndicator,
-  TypeOrmHealthIndicator,
-  MicroserviceHealthIndicator,
-} from '@nestjs/terminus';
 
 import { ConfigService } from './config';
 

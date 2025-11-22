@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   ConflictException,
@@ -13,6 +12,7 @@ import {
   Body,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { User } from 'src/common/decorators';
@@ -25,14 +25,14 @@ import { PaginationUsersDto } from 'src/modules/users/dto';
 import { UserEntity } from 'src/modules/users/entities';
 import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { StoriesService } from '../services';
-import { StoryEntity } from '../entities';
 import {
   PaginationStoriesDto,
   SelectStoriesDto,
   CreateStoryDto,
   UpdateStoryDto,
 } from '../dto/stories';
+import { StoriesService } from '../services';
+import { StoryEntity } from '../entities';
 
 /**
  * [description]
@@ -102,7 +102,7 @@ export class StoriesController {
     @Query() options: SelectStoriesDto,
     @User() user: UserEntity,
   ): Promise<PaginationUsersDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.storiesService.selectManyAndCountByFollowings(options);
   }
 
@@ -115,7 +115,7 @@ export class StoriesController {
     @Query() options: SelectStoriesDto,
     @User() user: UserEntity,
   ): Promise<PaginationStoriesDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.storiesService.selectManyAndCount(options);
   }
 

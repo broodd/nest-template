@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -12,6 +11,7 @@ import {
   Body,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
@@ -61,7 +61,7 @@ export class PostsController {
     @Query() options: SelectPostsDto,
     @User() user: UserEntity,
   ): Promise<PaginationPostsDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.postsService.selectManyAndCountByFollowings(options);
   }
 
@@ -75,7 +75,7 @@ export class PostsController {
     @Query() options: SelectPostsDto,
     @User() user: UserEntity,
   ): Promise<PaginationPostsDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.postsService.selectManyAndCount(options);
   }
 

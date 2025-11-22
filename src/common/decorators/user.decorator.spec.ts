@@ -1,6 +1,6 @@
-import { User } from './user.decorator';
-
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
+
+import { User } from './user.decorator';
 
 export function getParamDecoratorFactory(
   decorator: Function, // eslint-disable-line @typescript-eslint/ban-types

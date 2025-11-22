@@ -1,12 +1,13 @@
-import { UseFilters, UsePipes } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
+
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
   ConnectedSocket,
 } from '@nestjs/websockets';
+import { UseFilters, UsePipes } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 
 import { SocketsExceptionFilter } from 'src/common/filters';
 import { validationPipe } from 'src/common/pipes';
@@ -14,6 +15,7 @@ import { ErrorTypeEnum } from 'src/common/enums';
 
 import { UsersService } from 'src/modules/users/services';
 import { UserEntity } from 'src/modules/users/entities';
+
 import { SocketsService } from './sockets.service';
 
 /**

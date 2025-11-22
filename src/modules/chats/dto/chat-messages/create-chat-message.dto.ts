@@ -1,4 +1,3 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
 import {
   ValidateNested,
   IsNotEmpty,
@@ -8,9 +7,11 @@ import {
   IsString,
 } from 'class-validator';
 
+import { ApiProperty, PickType } from '@nestjs/swagger';
+
 import { ID } from 'src/common/dto';
 
-import { ChatEntity, ChatMessageEntity } from '../../entities';
+import { ChatMessageEntity, ChatEntity } from '../../entities';
 
 /**
  * [description]

@@ -1,5 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { Socket } from 'socket.io';
+
+import { TestingModule, Test } from '@nestjs/testing';
 
 import { SocketsService } from './sockets.service';
 

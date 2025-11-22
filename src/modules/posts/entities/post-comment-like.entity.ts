@@ -1,9 +1,11 @@
 import { JoinColumn, ManyToOne, Entity, Column, Index } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CommonEntity } from 'src/common/entities';
 
 import { UserEntity } from 'src/modules/users/entities';
+
 import { PostCommentEntity } from './post-comment.entity';
 
 /**

@@ -1,4 +1,5 @@
 import { MaxLength, MinLength, IsEnum } from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { NotificationsTypeEnum } from '../enums';

@@ -1,12 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
-import { JwtService } from '@nestjs/jwt';
 import { Socket } from 'socket.io';
+
+import { TestingModule, Test } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
+
+import { UsersService } from '../../users/services';
+import { UserEntity } from '../../users/entities';
 
 import { SocketsGateway } from './sockets.gateway';
 import { SocketsService } from './sockets.service';
-import { UserEntity } from '../../users/entities';
-import { UsersService } from '../../users/services';
 
 describe('SocketsGateway', () => {
   let service: SocketsGateway;

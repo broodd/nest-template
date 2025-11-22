@@ -1,6 +1,7 @@
-import { DynamicModule } from '@nestjs/common';
 import { expect } from 'chai';
 import { spy } from 'sinon';
+
+import { DynamicModule } from '@nestjs/common';
 
 import { MULTIPART_MODULE_OPTIONS } from './multipart.constants';
 import { MultipartModule } from './multipart.module';

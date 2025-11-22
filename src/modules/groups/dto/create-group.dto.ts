@@ -1,6 +1,8 @@
-import { IsOptional, MinLength, MaxLength, ValidateNested } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ValidateNested, IsOptional, MinLength, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
+
+import { ApiProperty } from '@nestjs/swagger';
+
 import { ID } from 'src/common/dto';
 
 /**

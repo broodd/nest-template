@@ -1,17 +1,20 @@
-import { Column, Entity, ManyToOne, JoinTable, OneToMany, JoinColumn, ManyToMany } from 'typeorm';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { JoinColumn, ManyToMany, ManyToOne, JoinTable, OneToMany, Column, Entity } from 'typeorm';
 import { Transform } from 'class-transformer';
 
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+
 import { CommonEntity } from 'src/common/entities';
+
+import { VirtualColumn } from 'src/database/decorators';
 
 import { GroupEntity } from 'src/modules/groups/entities';
 import { UserEntity } from 'src/modules/users/entities';
 import { FileEntity } from 'src/modules/files/entities';
-import { VirtualColumn } from 'src/database/decorators';
+
+import { CreateLocationDto } from '../dto';
 
 import { PostCommentEntity } from './post-comment.entity';
 import { PostLikeEntity } from './post-like.entity';
-import { CreateLocationDto } from '../dto';
 
 /**
  * [description]

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { UserEntity } from 'src/modules/users/entities';
 
 class ImportResultAffectedRowDto<ImportRowDto> {

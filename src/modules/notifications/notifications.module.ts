@@ -1,13 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
+
+import { UsersModule } from '../users';
 
 import { NotificationsController } from './controllers';
 import { NOTIFICATION_QUEUE } from './queues/constants';
 import { NotificationsService } from './services';
 import { NotiticationsProcessor } from './queues';
 import { NotificationEntity } from './entities';
-import { BullModule } from '@nestjs/bull';
-import { UsersModule } from '../users';
 
 /**
  * [description]

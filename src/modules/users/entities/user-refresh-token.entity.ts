@@ -1,6 +1,7 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { ManyToOne, Entity, Column } from 'typeorm';
 import { Exclude } from 'class-transformer';
+
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { CommonEntity } from 'src/common/entities';
 

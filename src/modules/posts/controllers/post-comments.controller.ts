@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -12,6 +11,7 @@ import {
   Body,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
@@ -19,14 +19,14 @@ import { ID } from 'src/common/dto';
 import { UserEntity } from '../../users/entities';
 import { JwtAuthGuard } from '../../auth/guards';
 
-import { PostCommentsService } from '../services';
-import { PostCommentEntity } from '../entities';
 import {
   PaginationPostCommentsDto,
   SelectPostCommentsDto,
   CreatePostCommentDto,
   UpdatePostCommentDto,
 } from '../dto/post-comments';
+import { PostCommentsService } from '../services';
+import { PostCommentEntity } from '../entities';
 
 /**
  * [description]
@@ -67,7 +67,7 @@ export class PostCommentsController {
     @Query() options: SelectPostCommentsDto,
     @User() user: UserEntity,
   ): Promise<PaginationPostCommentsDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     options.postId = conditions.id;
     return this.postCommentsService.selectManyAndCount(options);
   }

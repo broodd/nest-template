@@ -1,4 +1,5 @@
 import { SelectQueryBuilder, Repository } from 'typeorm';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -30,13 +31,13 @@ export class RelationshipsService extends CommonService<
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
   public find(
-    optionsOrConditions: FindManyBracketsOptions<RelationshipEntity> = {},
+    options: FindManyBracketsOptions<RelationshipEntity> = {},
   ): SelectQueryBuilder<RelationshipEntity> {
-    const qb = super.find(optionsOrConditions);
-    const type = optionsOrConditions['type'];
+    const qb = super.find(options);
+    const type = options['type'];
 
     if (type) {
       if (type === SelectRelationshipsByTypeEnum.FOLLOWERS) {

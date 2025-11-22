@@ -1,6 +1,8 @@
 import { IsNotEmpty, IsObject } from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+
+import { TransformValidateFile } from 'src/common/helpers';
 
 import { MultipartBodyFile } from 'src/multipart/interfaces';
 
@@ -13,7 +15,7 @@ export class CreateFileDto {
    */
   @IsObject()
   @IsNotEmpty()
-  @Transform(({ value: [file] }) => file)
+  @TransformValidateFile()
   @ApiProperty({
     type: String,
     format: 'binary',

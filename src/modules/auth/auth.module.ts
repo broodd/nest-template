@@ -2,8 +2,9 @@ import { PassportModule } from '@nestjs/passport';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
-import { UsersModule } from 'src/modules/users';
 import { SendMailModule } from 'src/sendmail';
+
+import { UsersModule } from '../users';
 
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { AuthController } from './controllers';

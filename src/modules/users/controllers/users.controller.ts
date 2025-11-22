@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -6,23 +5,21 @@ import {
   Controller,
   UseGuards,
   Delete,
+  Header,
   Param,
   Patch,
   Query,
   Post,
   Body,
   Get,
-  Header,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { User, UseRole } from 'src/common/decorators';
+import { UseRole, User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
 
 import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { UsersService } from '../services';
-import { UserEntity } from '../entities';
-import { UserRoleEnum } from '../enums';
 import {
   PaginationUsersDto,
   SelectUsersDto,
@@ -30,6 +27,9 @@ import {
   UpdateUserDto,
   CreateUserDto,
 } from '../dto';
+import { UsersService } from '../services';
+import { UserEntity } from '../entities';
+import { UserRoleEnum } from '../enums';
 
 /**
  * [description]
@@ -65,7 +65,7 @@ export class UsersController {
     @Query() options: SelectUsersDto,
     @User() user: UserEntity,
   ): Promise<PaginationUsersDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.usersService.selectManyAndCount(options);
   }
 
@@ -92,7 +92,7 @@ export class UsersController {
     @Query() options: SelectUserDto,
     @User() user: UserEntity,
   ): Promise<UserEntity> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.usersService.selectOneWithCounters(conditions, options);
   }
 

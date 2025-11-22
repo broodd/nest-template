@@ -1,13 +1,15 @@
+import { URL } from 'node:url';
+
+import { FastifyReply } from 'fastify';
+
 import {
-  Catch,
-  Logger,
-  HttpStatus,
+  ExceptionFilter,
   ArgumentsHost,
   HttpException,
-  ExceptionFilter,
+  HttpStatus,
+  Logger,
+  Catch,
 } from '@nestjs/common';
-import { URL } from 'node:url';
-import { FastifyReply } from 'fastify';
 
 import { ErrorTypeEnum } from '../enums';
 

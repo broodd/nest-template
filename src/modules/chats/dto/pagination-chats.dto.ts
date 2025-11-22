@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { PaginationDto } from 'src/common/dto';
+
 import { ChatEntity } from '../entities';
 
 /**

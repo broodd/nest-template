@@ -1,4 +1,3 @@
-import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -11,22 +10,23 @@ import {
   Post,
   Get,
 } from '@nestjs/common';
+import { ApiExtraModels, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
 
-import { JwtAuthGuard } from 'src/modules/auth/guards';
 import { UserEntity } from 'src/modules/users/entities';
+import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { PaginationChatsDto, SelectChatsDto, CreateChatDto } from '../dto';
-import { ChatParticipantsService, ChatsService } from '../services';
-import { ChatEntity } from '../entities';
 import {
   ChatReadMessageResponseDto,
   ChatReceiveMessageDto,
   CreateChatMessageDto,
   ChatReadMessageDto,
 } from '../dto/chat-messages';
+import { PaginationChatsDto, SelectChatsDto, CreateChatDto } from '../dto';
+import { ChatParticipantsService, ChatsService } from '../services';
+import { ChatEntity } from '../entities';
 
 /**
  * [description]
@@ -81,7 +81,7 @@ export class ChatsController {
     @Query() options: SelectChatsDto,
     @User() user: UserEntity,
   ): Promise<PaginationChatsDto> {
-    options.userId = user.id;
+    options._userId = user.id;
     return this.chatsService.selectManyAndCount(options);
   }
 

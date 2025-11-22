@@ -1,4 +1,8 @@
-import { dotNotation, toNumArrayByComa, toObjectFromStringArray } from './transform.helper';
+import {
+  stringArrayToNestedObject,
+  toObjectFromStringArray,
+  toNumArrayByComa,
+} from './transform.helper';
 
 describe('TransformHelper', () => {
   describe('toNumArrayByComa', () => {
@@ -30,10 +34,14 @@ describe('TransformHelper', () => {
     });
   });
 
-  describe('dotNotation', () => {
+  describe('stringArrayToNestedObject', () => {
     it('should be return object', () => {
-      const received = dotNotation(['foo.bar', 'foo.other', 'foo.bar.sub'], true);
+      const received = stringArrayToNestedObject(
+        ['title', 'foo.bar', 'foo.other', 'foo.bar.sub'],
+        true,
+      );
       expect(received).toMatchObject({
+        title: true,
         foo: {
           other: true,
           bar: {

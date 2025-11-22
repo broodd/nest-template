@@ -1,13 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { OneToMany, Entity } from 'typeorm';
 
-import { UserEntity } from 'src/modules/users/entities';
+import { ApiProperty } from '@nestjs/swagger';
+
 import { CommonEntity } from 'src/common/entities';
+
+import { VirtualColumn } from 'src/database/decorators';
+
+import { UserEntity } from 'src/modules/users/entities';
 
 import { ChatParticipantEntity } from './chat-participant.entity';
 import { ChatMessageEntity } from './chat-message.entity';
-import { VirtualColumn } from 'src/database/decorators';
 
 /**
  * [description]

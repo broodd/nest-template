@@ -1,13 +1,14 @@
-import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm';
-import { NotFoundException, Injectable } from '@nestjs/common';
+import { SelectQueryBuilder, FindOptionsWhere, Repository } from 'typeorm';
 import { instanceToPlain } from 'class-transformer';
+
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { ChatEntity, ChatMessageEntity } from '../entities';
+import { ChatMessageEntity, ChatEntity } from '../entities';
 import { PaginationChatsDto } from '../dto';
 
 /**
@@ -56,7 +57,7 @@ export class ChatsService extends CommonService<ChatEntity, PaginationChatsDto> 
     options: FindManyBracketsOptions<ChatEntity> = { loadEagerRelations: false },
   ): Promise<PaginationChatsDto> {
     const qb = this.find(options).andWhere(options.whereBrackets);
-    const userId = options.userId;
+    const userId = options._userId;
 
     qb.addSelect((sub) => {
       return sub
@@ -120,7 +121,7 @@ export class ChatsService extends CommonService<ChatEntity, PaginationChatsDto> 
     options: FindManyBracketsOptions<ChatEntity> = { loadEagerRelations: true },
   ): Promise<ChatEntity> {
     const qb = this.find({ ...instanceToPlain(options), where: conditions });
-    const userId = options.userId;
+    const userId = options._userId;
 
     qb.addSelect((sub) => {
       return sub

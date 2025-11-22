@@ -1,5 +1,5 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsNull } from 'typeorm';
+
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -13,6 +13,7 @@ import {
   Body,
   Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { FindOneOptionsDto, ID } from 'src/common/dto';
 import { User } from 'src/common/decorators';
@@ -20,14 +21,14 @@ import { User } from 'src/common/decorators';
 import { UserEntity } from '../../users/entities';
 import { JwtAuthGuard } from '../../auth/guards';
 
-import { NotificationsService } from '../services';
-import { NotificationEntity } from '../entities';
 import {
   PaginationNotificationsDto,
   SelectNotificationsDto,
   CreateNotificationDto,
   UpdateNotificationDto,
 } from '../dto';
+import { NotificationsService } from '../services';
+import { NotificationEntity } from '../entities';
 
 /**
  * [description]

@@ -1,3 +1,2 @@
+export * from './multipart.constants';
 export * from './multipart.module';
-
-export * from './storage.service';

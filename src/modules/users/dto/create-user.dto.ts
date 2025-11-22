@@ -1,17 +1,20 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ValidateNested,
   IsOptional,
+  IsTimeZone,
   IsDefined,
   MaxLength,
   MinLength,
   IsEmail,
   Matches,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+import { ApiProperty, OmitType } from '@nestjs/swagger';
+
+import { ID } from 'src/common/dto';
 
 import { AUTH_PASSWORD_REGEX } from 'src/modules/auth/auth.constants';
-import { ID } from 'src/common/dto';
 
 /**
  * [description]
@@ -24,6 +27,13 @@ export class CreateUserDto {
   @MaxLength(50)
   @ApiProperty({ example: 'admin@gmail.com', maxLength: 50 })
   public readonly email: string;
+
+  /**
+   * [description]
+   */
+  @IsTimeZone()
+  @ApiProperty({ minLength: 1, maxLength: 16, example: 'Europe/Kiev' })
+  public readonly timezone: string;
 
   /**
    * [description]

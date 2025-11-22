@@ -1,9 +1,10 @@
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { JoinColumn, ManyToOne, Column, Entity } from 'typeorm';
+
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
-import { UserEntity } from 'src/modules/users/entities';
-
 import { CommonEntity } from 'src/common/entities';
+
+import { UserEntity } from 'src/modules/users/entities';
 
 /**
  * [description]

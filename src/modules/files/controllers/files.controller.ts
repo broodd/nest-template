@@ -1,34 +1,37 @@
-import { ApiTags, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import {
-  ClassSerializerInterceptor,
-  UseInterceptors,
   Controller,
   UseGuards,
   Delete,
-  Patch,
   Param,
+  Patch,
   Query,
-  Post,
   Body,
+  Post,
   Get,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
-import { FileValidationPipe } from 'src/multipart/pipes';
-import { JwtAuthGuard } from 'src/modules/auth/guards';
+import { UseRole, User } from 'src/common/decorators';
 import { ID } from 'src/common/dto';
 
-import { SelectFileDto, CreateFileDto, SelectFilesDto, PaginationFilesDto } from '../dto';
+import { StorageFoldersEnum } from 'src/multipart';
+
+import { UserEntity } from 'src/modules/users/entities';
+import { JwtAuthGuard } from 'src/modules/auth/guards';
+import { UserRoleEnum } from 'src/modules/users/enums';
+
+import { PaginationFilesDto, SelectFilesDto, CreateFileDto, SelectFileDto } from '../dto';
 import { FilesService } from '../services';
 import { FileEntity } from '../entities';
 
 /**
  * [description]
  */
-@ApiBearerAuth()
+@ApiCookieAuth('accessToken')
 @ApiTags('files')
 @Controller('files')
 @UseGuards(JwtAuthGuard)
-@UseInterceptors(ClassSerializerInterceptor)
+@UseRole(UserRoleEnum.ADMIN)
 export class FilesController {
   /**
    * [description]
@@ -39,12 +42,14 @@ export class FilesController {
   /**
    * [description]
    * @param file
-   * @param owner
    */
-  @Post('')
+  @Post()
   @ApiConsumes('multipart/form-data')
-  public async createOne(@Body(FileValidationPipe) data: CreateFileDto): Promise<FileEntity> {
-    return this.filesService.createOne(data.file);
+  public async createOne(
+    @Body() data: CreateFileDto,
+    @User() user: UserEntity,
+  ): Promise<FileEntity> {
+    return this.filesService.createOne(data.file, user.id, StorageFoldersEnum.FILES);
   }
 
   /**
@@ -59,7 +64,6 @@ export class FilesController {
   /**
    * [description]
    * @param conditions
-   * @param owner
    * @param options
    */
   @Get(':id')
@@ -72,15 +76,14 @@ export class FilesController {
 
   /**
    * [description]
-   * @param file
    * @param conditions
-   * @param owner
+   * @param data
    */
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
   public async updateOne(
-    @Body() data: CreateFileDto,
     @Param() conditions: ID,
+    @Body() data: CreateFileDto,
   ): Promise<FileEntity> {
     return this.filesService.updateOne(conditions, data.file);
   }
@@ -88,7 +91,6 @@ export class FilesController {
   /**
    * [description]
    * @param conditions
-   * @param owner
    */
   @Delete(':id')
   public async deleteOne(@Param() conditions: ID): Promise<FileEntity> {

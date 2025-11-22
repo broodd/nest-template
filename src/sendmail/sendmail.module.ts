@@ -1,54 +1,52 @@
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { MailerModule } from '@nestjs-modules/mailer';
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 
-import { ConfigService } from 'src/config';
+import { DEFAULT_QUEUE_CONFIG } from 'src/common/queues/constants';
 
-import { SendMailService } from './sendmail.service';
+import { ConfigModule } from 'src/config';
 
+import { UsersModule } from 'src/modules/users';
+
+import {
+  SendmailTemplateContextFactory,
+  SendmailTransportProvider,
+  SendMailService,
+} from './services';
+import { registerHandlebarsHelpers } from './handlebars-helpers';
+import { SendmailTemplatesController } from './controllers';
+import { SENDMAIL_QUEUE } from './queues/constants';
+import { SendMailProcessor } from './queues';
+
+/**
+ * [description]
+ */
+export const SendMailQueueModule = BullModule.registerQueue({
+  defaultJobOptions: DEFAULT_QUEUE_CONFIG,
+  name: SENDMAIL_QUEUE.name,
+  limiter: {
+    max: 1, // max 1 job per operation
+    duration: 2000, // interval 2 seconds
+  },
+});
+
+/**
+ * Setup Handlebars heplers
+ */
+registerHandlebarsHelpers();
+
+/**
+ * [description]
+ */
 @Module({
-  imports: [
-    MailerModule.forRootAsync({
-      useFactory: async (config: ConfigService) => ({
-        transport: {
-          tls: { rejectUnauthorized: true },
-          host: config.get('SMTP_HOST'),
-          port: config.get('SMTP_PORT'),
-          secure: true,
-          auth: {
-            user: config.get('SMTP_USER'),
-            pass: config.get('SMTP_PASS'),
-          },
-          dkim: {
-            domainName: config.get('SMTP_DKIM_DOMAIN'),
-            keySelector: config.get('SMTP_DKIM_SELECTOR'),
-            privateKey: config.get('SMTP_DKIM_SECRET'),
-          },
-        },
-        defaults: {
-          from: config.get('SMTP_FROM'),
-        },
-        template: {
-          dir: __dirname + '/templates',
-          adapter: new HandlebarsAdapter({
-            ifNotEquals: function (arg1, arg2, options) {
-              return arg1 != arg2 ? options.fn(this) : options.inverse(this);
-            },
-            ifEquals: function (arg1, arg2, options) {
-              return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-            },
-            parse: function (text) {
-              const template = Handlebars.compile(text);
-              return new Handlebars.SafeString(template(this));
-            },
-          }),
-          options: { strict: true },
-        },
-      }),
-      inject: [ConfigService],
-    }),
+  imports: [ConfigModule, UsersModule, SendMailQueueModule],
+  controllers: [SendmailTemplatesController],
+  providers: [
+    SendmailTransportProvider,
+
+    SendmailTemplateContextFactory,
+    SendMailService,
+    SendMailProcessor,
   ],
-  providers: [SendMailService],
-  exports: [SendMailService],
+  exports: [SendMailService, SendmailTemplateContextFactory, SendMailQueueModule],
 })
 export class SendMailModule {}

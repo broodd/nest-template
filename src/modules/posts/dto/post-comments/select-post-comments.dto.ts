@@ -1,6 +1,7 @@
 import { IsOptional, IsUUID } from 'class-validator';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { FindOneOptions } from 'typeorm';
+
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 

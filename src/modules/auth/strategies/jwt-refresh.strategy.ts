@@ -1,13 +1,15 @@
+import { FastifyRequest } from 'fastify';
+import { Strategy } from 'passport-jwt';
+
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { compare } from 'src/common/helpers';
+
 import { ConfigService } from 'src/config';
 
-import { UserEntity } from 'src/modules/users/entities';
-import { JwtRefreshTokenPayloadDto } from '../dto';
+import { JwtRefreshTokenPayloadDto, JwtRefreshTokenDto, ReqAuthUserDto } from '../dto';
 import { AuthService } from '../services';
 
 /**
@@ -25,9 +27,21 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
     private readonly authService: AuthService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
+      jwtFromRequest: JwtRefreshTokenStrategy.extractJwtFromCookie,
       secretOrKey: configService.get('JWT_SECRET_REFRESH_TOKEN'),
     });
+  }
+
+  /**
+   * [description]
+   * @param req
+   */
+  private static extractJwtFromCookie(req: FastifyRequest): string | null {
+    const bodyToken = (req.body as JwtRefreshTokenDto)?.refreshToken;
+    if (bodyToken) return bodyToken;
+
+    if (!req.cookies) return null;
+    return req.cookies['refreshToken'] || null;
   }
 
   /**
@@ -38,7 +52,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
     id,
     ppid,
     refreshTokenId,
-  }: JwtRefreshTokenPayloadDto): Promise<UserEntity> {
+  }: JwtRefreshTokenPayloadDto): Promise<ReqAuthUserDto> {
     const user = await this.authService.validateUser(
       { id, refreshTokens: { id: refreshTokenId } },
       { relations: { refreshTokens: true } },

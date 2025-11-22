@@ -1,22 +1,21 @@
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { ConflictException, NotFoundException, Type } from '@nestjs/common';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
-import { Stringifier, stringify } from 'csv-stringify';
-import { Transactional } from 'typeorm-transactional';
 import {
   SelectQueryBuilder,
-  FindOptionsWhere,
   FindOptionsUtils,
-  FindManyOptions,
-  FindOneOptions,
+  FindOptionsWhere,
+  InsertResult,
   DeepPartial,
   Repository,
 } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Transactional } from 'typeorm-transactional';
+import { instanceToPlain } from 'class-transformer';
 
-import { FindManyBracketsOptions } from 'src/common/interfaces';
+import { ConflictException, NotFoundException, HttpException, Type } from '@nestjs/common';
+
+import { FindManyBracketsOptions, FindOneBracketsOptions } from 'src/common/interfaces';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { setQueryOrder } from '../helpers';
+import { iterateAllKeysInNestedObject, stringArrayToNestedObject } from '../helpers';
 import { CommonEntity } from '../entities';
 
 /**
@@ -28,12 +27,37 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * @param entityClass
    * @param repository
    * @param paginationClass
+   * @param errorPrefix
    */
   constructor(
     public readonly entityClass: Type<EntityClass>,
     public readonly repository: Repository<EntityClass>,
     public readonly paginationClass: Type<PaginationClass>,
+    public readonly errorPrefix: string = '',
   ) {}
+
+  /**
+   * Generate error in format
+   * @param ErrorRef
+   * @param errorType
+   * @param error
+   */
+  public throwError(ErrorRef: Type<HttpException>, errorType: ErrorTypeEnum, error?: Error): never {
+    throw new ErrorRef({ message: this.errorPrefix + errorType, error });
+  }
+
+  /**
+   * [description]
+   * @param entitiesLike
+   */
+  @Transactional()
+  public async insert(
+    entitiesLike: QueryDeepPartialEntity<EntityClass> | QueryDeepPartialEntity<EntityClass>[],
+  ): Promise<InsertResult> {
+    return this.repository
+      .insert(entitiesLike)
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.INPUT_DATA_ERROR, error));
+  }
 
   /**
    * [description]
@@ -42,9 +66,9 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   @Transactional()
   public async createMany(entitiesLike: DeepPartial<EntityClass>[]): Promise<EntityClass[]> {
     const entities = this.repository.create(entitiesLike);
-    return this.repository.save(entities).catch(() => {
-      throw new ConflictException(ErrorTypeEnum.INPUT_DATA_ERROR);
-    });
+    return this.repository
+      .save(entities)
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.INPUT_DATA_ERROR, error));
   }
 
   /**
@@ -54,9 +78,9 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   @Transactional()
   public async createOne(entityLike: DeepPartial<EntityClass>): Promise<EntityClass> {
     const entity = this.repository.create(entityLike);
-    return this.repository.save(entity).catch((error) => {
-      throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
-    });
+    return this.repository
+      .save(entity)
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.INPUT_DATA_ERROR, error));
   }
 
   /**
@@ -64,38 +88,119 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * @param entityLike
    */
   @Transactional()
-  public async createOneAndSelect(entityLike: DeepPartial<EntityClass>): Promise<EntityClass> {
+  public async createOneAndSelect(
+    entityLike: DeepPartial<EntityClass>,
+    options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: true },
+  ): Promise<EntityClass> {
     const { id } = await this.createOne(entityLike);
-    return this.selectOne({ id } as FindOptionsWhere<EntityClass>, { loadEagerRelations: true });
+    return this.selectOne({ id } as FindOptionsWhere<EntityClass>, options);
   }
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
-  public find(
-    optionsOrConditions: FindManyOptions<EntityClass> = {},
-  ): SelectQueryBuilder<EntityClass> {
+  public find(options: FindManyBracketsOptions<EntityClass> = {}): SelectQueryBuilder<EntityClass> {
     const metadata = this.repository.metadata;
-    const alias =
-      FindOptionsUtils.extractFindManyOptionsAlias(optionsOrConditions) || metadata.name;
-    const qb = this.repository.createQueryBuilder(alias);
+    const qb = this.repository.createQueryBuilder(options.alias || metadata.name);
 
-    qb.setFindOptions(optionsOrConditions);
+    qb.setFindOptions(options);
+
+    if (options.whereBrackets) qb.andWhere(options.whereBrackets);
+
+    const orderASC: string[] = options.asc;
+    const orderDESC: string[] = options.desc;
+    const orderRelations: string[] = [];
 
     /**
-     * To add order by like `__custom` fields
+     * Order custom/virtual/computed fields
+     * Custom fields startsWith '__', its computed/virtual columns, ussually it's counters
+     * @xample __members_count, __new_messages_count
      */
-    setQueryOrder(qb, optionsOrConditions['asc'], 'ASC');
-    setQueryOrder(qb, optionsOrConditions['desc'], 'DESC');
+    orderASC
+      ?.filter((key) => key.startsWith('__'))
+      .forEach((key) => {
+        qb.addOrderBy(key, 'ASC', 'NULLS LAST');
+      });
 
-    if (optionsOrConditions.loadEagerRelations !== false) {
-      FindOptionsUtils.joinEagerRelations(qb, alias, metadata);
+    orderDESC
+      ?.filter((key) => key.startsWith('__'))
+      .forEach((key) => {
+        qb.addOrderBy(key, 'DESC', 'NULLS LAST');
+      });
 
-      /**
-       * Place for common relation
-       * @example qb.leftJoinAndSelect('Entity.relation_field', 'Entity_relation_field')
-       */
+    /**
+     * Order nested/relations fields
+     * Custom fields includes '.', its computed/virtual columns, ussually it's counters
+     * @xample event.class.startTime, chat.message.owner.createdAt
+     * Its will replace to event_class.startTime, chat_message_owner.createdAt
+     */
+    orderASC
+      ?.filter((key) => key.includes('.'))
+      .forEach((key) => {
+        const parts = key.split('.');
+        if (parts.length === 2) {
+          // top level entity order
+          qb.addOrderBy(parts.join('.'), 'ASC', 'NULLS LAST');
+        } else {
+          const field = parts.pop();
+          qb.addOrderBy(parts.join('_') + '.' + field, 'ASC', 'NULLS LAST');
+
+          orderRelations.push(parts.join('.'));
+        }
+      });
+
+    orderDESC
+      ?.filter((key) => key.includes('.'))
+      .forEach((key) => {
+        const parts = key.split('.');
+        if (parts.length === 2) {
+          // top level entity order
+          qb.addOrderBy(parts.join('.'), 'DESC', 'NULLS LAST');
+        } else {
+          const field = parts.pop();
+          qb.addOrderBy(parts.join('_') + '.' + field, 'DESC', 'NULLS LAST');
+
+          orderRelations.push(parts.join('.'));
+        }
+      });
+
+    if (options.loadEagerRelations !== false) {
+      FindOptionsUtils.joinEagerRelations(qb, metadata.name, metadata);
+    }
+
+    /**
+     * Smart join relations from query parameter
+     * @param joinRelations - user's relations from query parametr
+     * @param excludeRelations - useful for overwrite user's joinRelations, and always hide some relations
+     * @todo add check entity.hasRelation
+     */
+    options.joinRelations ??= [];
+    options.excludeRelations ??= [];
+
+    if (options.joinRelations.length) {
+      const mergedRelations = orderRelations.concat(options.joinRelations);
+      const excludeRelations = options.excludeRelations.sort((a, b) => a.length - b.length);
+
+      const mapedRelations = mergedRelations.map((relation) => {
+        if (relation.includes('!')) return relation;
+
+        const maxExludeRelation = excludeRelations.find((exclude) => relation.startsWith(exclude));
+        return maxExludeRelation ? maxExludeRelation : relation;
+      }, []);
+
+      const relations = stringArrayToNestedObject(mapedRelations);
+      iterateAllKeysInNestedObject(relations, (path) => {
+        path = path.replace(/!/g, '');
+
+        if (path.includes('.')) {
+          const pathWithLastDot = path.replace(/\.(?=.*\.)/g, '_');
+          const pathAsAlias = path.replace(/\./g, '_');
+          qb.leftJoinAndSelect(pathWithLastDot, pathAsAlias);
+        } else {
+          qb.leftJoinAndSelect(`${qb.alias}.${path}`, path);
+        }
+      });
     }
 
     return qb;
@@ -105,31 +210,27 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * [description]
    * @param options
    */
+  @Transactional()
   public async selectManyAndCount(
     options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: false },
   ): Promise<PaginationClass> {
-    const qb = this.find(options);
-    if (options.whereBrackets) qb.andWhere(options.whereBrackets);
-    return qb
+    return this.find(options)
       .getManyAndCount()
       .then((data) => new this.paginationClass(data))
-      .catch((error) => {
-        throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
-      });
+      .catch((error) => this.throwError(NotFoundException, ErrorTypeEnum.NOT_FOUND_ERROR, error));
   }
 
   /**
    * [description]
    * @param options
    */
+  @Transactional()
   public async selectMany(
     options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: false },
   ): Promise<EntityClass[]> {
-    const qb = this.find(options);
-    if (options.whereBrackets) qb.andWhere(options.whereBrackets);
-    return qb.getMany().catch((error) => {
-      throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
-    });
+    return this.find(options)
+      .getMany()
+      .catch((error) => this.throwError(NotFoundException, ErrorTypeEnum.NOT_FOUND_ERROR, error));
   }
 
   /**
@@ -137,15 +238,30 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * @param conditions
    * @param options
    */
+  @Transactional()
   public async selectOne(
     conditions: FindManyBracketsOptions<EntityClass>['where'],
-    options: FindOneOptions<EntityClass> = { loadEagerRelations: false },
+    options: FindManyBracketsOptions<EntityClass> = { loadEagerRelations: false },
   ): Promise<EntityClass> {
     return this.find({ ...instanceToPlain(options), where: conditions })
       .getOneOrFail()
-      .catch((error) => {
-        throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
-      });
+      .catch((error) => this.throwError(NotFoundException, ErrorTypeEnum.NOT_FOUND_ERROR, error));
+  }
+
+  /**
+   * [description]
+   * @param mergeIntoEntity
+   * @param entityLike
+   */
+  @Transactional()
+  public async updateOneFromEntity(
+    mergeIntoEntity: EntityClass,
+    entityLike: DeepPartial<EntityClass>,
+  ): Promise<EntityClass> {
+    const entity = this.repository.merge(mergeIntoEntity, entityLike);
+    return this.repository
+      .save(entity)
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.INPUT_DATA_ERROR, error));
   }
 
   /**
@@ -155,14 +271,11 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    */
   @Transactional()
   public async updateOne(
-    conditions: FindOneOptions<EntityClass>['where'],
+    conditions: FindOneBracketsOptions<EntityClass>['where'],
     entityLike: DeepPartial<EntityClass>,
   ): Promise<EntityClass> {
     const mergeIntoEntity = await this.selectOne(conditions, { loadEagerRelations: false });
-    const entity = this.repository.merge(mergeIntoEntity, entityLike);
-    return this.repository.save(entity).catch((error) => {
-      throw new ConflictException({ message: ErrorTypeEnum.INPUT_DATA_ERROR, error });
-    });
+    return this.updateOneFromEntity(mergeIntoEntity, entityLike);
   }
 
   /**
@@ -172,7 +285,7 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    */
   @Transactional()
   public async updateOneAndSelect(
-    conditions: FindOneOptions<EntityClass>['where'],
+    conditions: FindOneBracketsOptions<EntityClass>['where'],
     entityLike: DeepPartial<EntityClass>,
   ): Promise<EntityClass> {
     const { id } = await this.updateOne(conditions, entityLike);
@@ -187,7 +300,7 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
   @Transactional()
   public async update(
     conditions: FindOptionsWhere<EntityClass>,
-    entityLike: QueryDeepPartialEntity<EntityClass>,
+    entityLike: QueryDeepPartialEntity<unknown>,
   ): Promise<number> {
     return this.repository
       .createQueryBuilder()
@@ -196,9 +309,7 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
       .where(conditions)
       .execute()
       .then((data) => data.affected)
-      .catch(() => {
-        throw new ConflictException(ErrorTypeEnum.INPUT_DATA_ERROR);
-      });
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.INPUT_DATA_ERROR, error));
   }
 
   /**
@@ -206,82 +317,27 @@ export class CommonService<EntityClass extends CommonEntity, PaginationClass> {
    * @param conditions
    */
   @Transactional()
-  public async deleteOne(conditions: FindOneOptions<EntityClass>['where']): Promise<EntityClass> {
+  public async deleteOne(
+    conditions: FindOneBracketsOptions<EntityClass>['where'],
+  ): Promise<EntityClass> {
     const entity = await this.selectOne(conditions, { loadEagerRelations: false });
-    return this.repository.remove(entity).catch((error) => {
-      throw new NotFoundException({ message: ErrorTypeEnum.NOT_FOUND_ERROR, error });
-    });
+    return this.repository
+      .remove(entity)
+      .catch((error) => this.throwError(NotFoundException, ErrorTypeEnum.NOT_FOUND_ERROR, error));
   }
 
   /**
    * [description]
-   * @param entity
+   * @param conditions
    */
-  public fromEntityToRaw<T>(entity: T): Record<string, any> {
-    return Object.entries(entity).reduce((acc, [key, value]) => {
-      const property = this.entityClass.name + '_' + key;
-      acc[property] = value;
-      return acc;
-    }, {});
-  }
-
-  /**
-   * [description]
-   * @param raw
-   */
-  public fromRawToEntity(raw: any): Record<string, any> {
-    return Object.entries(raw).reduce((acc, [key, value]) => {
-      const splited = key.split('_');
-      splited.reduce((field, el, index) => {
-        if (el === '') el = '_';
-        if (index === 0) return acc;
-        if (index === splited.length - 1) field[el] = value;
-        else if (field[el] === undefined) field[el] = {};
-        return field[el];
-      }, {});
-
-      return acc;
-    }, {});
-  }
-
-  /**
-   * [description]
-   * @param mockFields
-   * @param qb
-   */
-  public async streamExportCSV<T, U>(
-    mockFields: T,
-    qb: SelectQueryBuilder<U>,
-  ): Promise<Stringifier> {
-    const columns = Object.entries(mockFields);
-    const qbStream = await qb.stream().catch(() => {
-      throw new NotFoundException(ErrorTypeEnum.NOT_FOUND_ERROR);
-    });
-
-    const stringifier = stringify({
-      bom: true,
-      header: true,
-      delimiter: ';',
-      cast: { date: (value) => new Date(value).toUTCString() },
-      columns: columns.map(([exportKey, dbKey]) => ({
-        header: exportKey,
-        key: dbKey,
-      })),
-    });
-
-    qbStream
-      .on('data', (raw) => {
-        const data = this.fromRawToEntity(raw);
-        const entity = plainToInstance(this.entityClass, data);
-        return stringifier.write(entity);
-      })
-      .on('error', (error) => {
-        console.error(error);
-        stringifier.end();
-        throw new NotFoundException(ErrorTypeEnum.NOT_FOUND_ERROR);
-      })
-      .on('end', () => stringifier.end());
-
-    return stringifier;
+  @Transactional()
+  public async delete(conditions: FindOptionsWhere<EntityClass>): Promise<number> {
+    return this.repository
+      .createQueryBuilder()
+      .delete()
+      .where(conditions)
+      .execute()
+      .then((data) => data.affected)
+      .catch((error) => this.throwError(ConflictException, ErrorTypeEnum.NOT_FOUND_ERROR, error));
   }
 }

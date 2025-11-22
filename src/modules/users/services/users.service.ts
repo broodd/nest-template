@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOneOptions, Repository } from 'typeorm';
 import { instanceToPlain } from 'class-transformer';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Stringifier } from 'csv-stringify';
 
+import { NotFoundException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { FindManyBracketsOptions, FindOneBracketsOptions } from 'src/common/interfaces';
-import { CommonService } from 'src/common/services';
+import { CommonWithCSV_Service } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
 import { RelationshipEntity } from 'src/modules/relationships/entities';
@@ -18,7 +19,7 @@ import { UserEntity } from '../entities';
  * [description]
  */
 @Injectable()
-export class UsersService extends CommonService<UserEntity, PaginationUsersDto> {
+export class UsersService extends CommonWithCSV_Service<UserEntity, PaginationUsersDto> {
   /**
    * [description]
    * @param repository
@@ -39,7 +40,7 @@ export class UsersService extends CommonService<UserEntity, PaginationUsersDto> 
     conditions: FindOneOptions<UserEntity>['where'],
     options: FindOneBracketsOptions<UserEntity> = { loadEagerRelations: false },
   ): Promise<UserEntity> {
-    const userId = options.userId;
+    const userId = options._userId;
     const qb = this.find({ ...instanceToPlain(options), where: conditions });
     qb.leftJoinAndSelect('UserEntity.backgroudCover', 'backgroudCover');
 
@@ -101,7 +102,7 @@ export class UsersService extends CommonService<UserEntity, PaginationUsersDto> 
     const qb = this.find(options);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
 
-    const userId = options.userId;
+    const userId = options._userId;
     if (userId) {
       qb.leftJoin('UserEntity.followers', 'followers', 'followers.ownerId = :userId', { userId });
       qb.addSelect('followers.id', '__is_followings');
@@ -139,8 +140,8 @@ export class UsersService extends CommonService<UserEntity, PaginationUsersDto> 
       name: 'name',
       email: 'email',
       createdAt: 'createdAt',
-      postsCount: '_.posts_count', // fromRawToEntity() in CommonService change original alias __posts_count
-      cover: '_.cover.src', // fromRawToEntity() in CommonService change original alias UserEntity__cover
+      postsCount: '_.posts_count', // fromRawToEntity() in CommonWithCSV_Service change @VirtualColumn from `__posts_count` to `_.posts_count`
+      cover: '_.cover.src', // fromRawToEntity() in CommonWithCSV_Service change Relation from `UserEntity__cover.*` to `_.cover.*`
     };
 
     const qb = this.find(options);
@@ -148,6 +149,6 @@ export class UsersService extends CommonService<UserEntity, PaginationUsersDto> 
     qb.limit(options.take);
     qb.offset(options.skip);
 
-    return this.streamExportCSV(fields, qb);
+    return this.exportByStream(fields, qb);
   }
 }

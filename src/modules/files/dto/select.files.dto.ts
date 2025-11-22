@@ -1,5 +1,6 @@
 import { IsOptional, MaxLength, MinLength } from 'class-validator';
 import { FindOneOptions, ILike } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';
@@ -16,7 +17,7 @@ export class SelectFilesDto extends FindManyOptionsDto<FileEntity> {
   @IsOptional()
   @MinLength(1)
   @MaxLength(256)
-  @ApiProperty({ example: 'example.md' })
+  @ApiProperty()
   public readonly filename?: string;
 
   /**

@@ -1,14 +1,15 @@
-import { UseFilters, UsePipes } from '@nestjs/common';
 import { Transactional } from 'typeorm-transactional';
 import { instanceToPlain } from 'class-transformer';
 import { IsNull, Not, Raw } from 'typeorm';
 import { Server } from 'socket.io';
+
 import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
   MessageBody,
 } from '@nestjs/websockets';
+import { UseFilters, UsePipes } from '@nestjs/common';
 
 import { SocketsExceptionFilter } from 'src/common/filters';
 import { SocketUser } from 'src/common/decorators';
@@ -17,17 +18,18 @@ import { validationPipe } from 'src/common/pipes';
 import { SocketsService } from 'src/modules/sockets/services';
 import { UserEntity } from 'src/modules/users/entities';
 
-import { ChatParticipantsService } from './chat-participants.service';
-import { ChatMessagesService } from './chat-messages.service';
-import { ChatSocketEventsEnum } from '../enums';
-import { ChatMessageEntity } from '../entities';
-import { ChatsService } from './chats.service';
 import {
   ChatReadMessageResponseDto,
   ChatReceiveMessageDto,
   CreateChatMessageDto,
   ChatReadMessageDto,
 } from '../dto/chat-messages';
+import { ChatMessageEntity } from '../entities';
+import { ChatSocketEventsEnum } from '../enums';
+
+import { ChatParticipantsService } from './chat-participants.service';
+import { ChatMessagesService } from './chat-messages.service';
+import { ChatsService } from './chats.service';
 
 /**
  * [description]
@@ -76,7 +78,7 @@ export class ChatsGateway {
     });
 
     const chat = await this.chatsService.selectOneWithOwner(entityLike.chat, {
-      userId: user.id,
+      _userId: user.id,
       loadEagerRelations: true,
     });
     const participantsIds = await this.chatParticipantsService.selectIds({

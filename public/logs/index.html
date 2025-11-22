@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error Logs</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <div id="root" class="p-4"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      function LogTable() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const [logs, setLogs] = useState([]);
+        const [totalPages, setTotalPages] = useState(1);
+        const [totalCount, setTotalCount] = useState(null);
+        const API_URL = '/api/v1/logs/errors';
+
+        const [filters, setFilters] = useState({
+          method: urlParams.get('method') || null,
+          url: urlParams.get('url') || null,
+          userId: urlParams.get('userId') || null,
+          startDate: urlParams.get('startDate') || null,
+          endDate: urlParams.get('endDate') || null,
+          take: parseInt(urlParams.get('take')) || 15,
+          page: parseInt(urlParams.get('page')) || 1,
+        });
+
+        const fetchLogs = () => {
+          const queryParams = new URLSearchParams({
+            desc: 'createdAt',
+            ...formatNotEmptyObject(filters),
+          }).toString();
+
+          fetch(`${API_URL}?${queryParams}`)
+            .then((res) => res.json())
+            .then((data) => {
+              setLogs(data.result);
+              setTotalPages(Math.ceil(data.count / filters.take));
+              setTotalCount(data.count);
+              updateURL();
+            })
+            .catch((err) => console.error('Error fetching logs:', err));
+        };
+
+        useEffect(fetchLogs, [filters]);
+
+        const formatDate = (date) => {
+          if (!date) return null;
+
+          var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+          if (month.length < 2) month = '0' + month;
+          if (day.length < 2) day = '0' + day;
+
+          return [year, month, day].join('-');
+        };
+
+        const formatNotEmptyObject = (object) => {
+          return Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
+        };
+
+        const updateFilters = (newFilters) => {
+          if (!newFilters.page) newFilters.page = 1;
+          setFilters((prev) => ({ ...prev, ...newFilters }));
+        };
+
+        const updateURL = () => {
+          const newUrl = new URL(window.location);
+          newUrl.search = new URLSearchParams({
+            desc: 'createdAt',
+            ...formatNotEmptyObject(filters),
+          }).toString();
+          window.history.replaceState(null, '', newUrl);
+        };
+
+        const handleDateFilter = (option) => {
+          const now = new Date();
+          let startDate = null;
+          let endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+
+          if (option === 'today') {
+            startDate = new Date(now.setHours(0, 0, 0, 0));
+          } else if (option === '1hour') {
+            startDate = new Date(now - 60 * 60 * 1000);
+          } else if (option === '10min') {
+            startDate = new Date(now - 10 * 60 * 1000);
+          } else {
+            startDate = null;
+            endDate = null;
+          }
+
+          updateFilters({ startDate: startDate?.toISOString(), endDate: endDate?.toISOString() });
+        };
+
+        const methodColors = {
+          GET: 'bg-cyan-500 text-white',
+          POST: 'bg-green-500 text-white',
+          PATCH: 'bg-purple-500 text-white',
+          DELETE: 'bg-red-500 text-white',
+          DEFAULT: 'bg-gray-500 text-white',
+        };
+
+        const copyToClipboard = (id, index) => {
+          navigator.clipboard.writeText(id);
+        };
+
+        const formatUserId = (userId) => {
+          if (!userId) return 'N/A';
+          return `...${userId.slice(-12)}`;
+        };
+
+        return (
+          <div className="mx-auto bg-white p-4 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Error Logs ({totalCount})</h2>
+              <div>
+                <button
+                  onClick={fetchLogs}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
+                >
+                  Refresh
+                </button>
+
+                {/* Clear Filters Button */}
+                <button
+                  className="p-2 bg-red-400 text-white rounded"
+                  onClick={() =>
+                    updateFilters({
+                      method: null,
+                      url: null,
+                      userId: null,
+                      startDate: null,
+                      endDate: null,
+                      page: 1,
+                      take: 15,
+                    })
+                  }
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="mb-4 flex gap-2 flex-wrap">
+              {/* Method Filter */}
+              <select
+                className="p-2 border rounded"
+                value={filters.method}
+                onChange={(e) => updateFilters({ method: e.target.value })}
+              >
+                <option value="">All Methods</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+
+              {/* URL Filter */}
+              <input
+                type="text"
+                placeholder="Filter by URL..."
+                className="p-2 border rounded"
+                value={filters.url}
+                onChange={(e) => updateFilters({ url: e.target.value })}
+              />
+
+              {/* User ID Filter */}
+              <input
+                type="text"
+                placeholder="Filter by User ID..."
+                className="p-2 border rounded"
+                value={filters.userId}
+                onChange={(e) => updateFilters({ userId: e.target.value })}
+              />
+
+              {/* User Email Filter */}
+              <input
+                type="text"
+                placeholder="Filter by User Email..."
+                className="p-2 border rounded"
+                value={filters.email}
+                onChange={(e) => updateFilters({ email: e.target.value })}
+              />
+
+              {/* Start Date Filter */}
+              <input
+                type="date"
+                className="p-2 border rounded"
+                value={formatDate(filters.startDate)}
+                onChange={(e) => {
+                  const startDate = new Date(e.target.value);
+                  startDate.setHours(0, 0, 0, 0);
+                  updateFilters({ startDate: startDate.toISOString() });
+                }}
+              />
+
+              {/* End Date Filter */}
+              <input
+                type="date"
+                className="p-2 border rounded"
+                value={formatDate(filters.endDate)}
+                onChange={(e) => {
+                  const endDate = new Date(e.target.value);
+                  endDate.setHours(23, 59, 59, 999);
+                  updateFilters({ endDate: endDate.toISOString() });
+                }}
+              />
+
+              {/* Date Presets */}
+              <select
+                className="p-2 border rounded"
+                onChange={(e) => handleDateFilter(e.target.value)}
+              >
+                <option value="">Select Date Range</option>
+                <option value="today">Today</option>
+                <option value="1hour">Last 1 Hour</option>
+                <option value="10min">Last 10 Minutes</option>
+              </select>
+
+              {/* User Email Filter */}
+              <input
+                type="number"
+                placeholder="Take N rows"
+                className="p-2 border rounded w-32"
+                value={filters.take}
+                onChange={(e) => updateFilters({ take: e.target.value, page: 1 })}
+              />
+            </div>
+
+            {logs && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="border p-2">User</th>
+                      <th className="border p-2">CreatedAt</th>
+                      <th className="border p-2">Method</th>
+                      <th className="border p-2">URL</th>
+                      <th className="border p-2">Body</th>
+                      <th className="border p-2">Query</th>
+                      <th className="border p-2">Params</th>
+                      <th className="border p-2">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log, index) => {
+                      return (
+                        <tr key={index} className="border align-baseline">
+                          {/* User ID with tooltip and click to copy */}
+                          <td className="border p-2 text-center relative text-sm">
+                            {log.user && log.user.cover && (
+                              <img class="inline-block" src={log.user.cover.src} alt="" />
+                            )}
+
+                            <div
+                              className="cursor-pointer underline overflow-hidden text-ellipsis "
+                              onClick={() => copyToClipboard(log.userId, index)}
+                              title={log.userId}
+                            >
+                              {formatUserId(log.userId)}
+                            </div>
+                            <div>{log.user?.email}</div>
+                            <div>{log.user?.name}</div>
+                          </td>
+
+                          <td className="border p-2 text-sm ">
+                            <div>
+                              {formatDate(log.createdAt)}{' '}
+                              {new Date(log.createdAt).toLocaleTimeString()}
+                            </div>
+                            <hr class="w-48 h-1 mx-auto my-2 rounded" />
+                            <div>{log.createdAt}</div>
+                          </td>
+
+                          {/* HTTP Method with color */}
+                          <td className="border p-2 font-bold uppercase text-center">
+                            <div
+                              className={`rounded p-2 ${
+                                methodColors[log.method] || methodColors.DEFAULT
+                              }`}
+                            >
+                              {log.method}
+                            </div>
+                          </td>
+
+                          <td className="border p-2">{log.url}</td>
+                          <td className="border p-2 text-sm truncate">
+                            <pre>{JSON.stringify(log.body, null, 2)}</pre>
+                          </td>
+                          <td className="border p-2 text-sm truncate">
+                            <pre>{JSON.stringify(log.query, null, 2)}</pre>
+                          </td>
+                          <td className="border p-2 text-sm truncate">
+                            <pre>{JSON.stringify(log.params, null, 2)}</pre>
+                          </td>
+                          <td className="border p-2 text-red-600">
+                            <pre>
+                              {JSON.stringify(JSON.parse(log.error), null, 2).replaceAll(
+                                `\\"`,
+                                '"',
+                              )}
+                            </pre>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-center gap-2">
+              <button
+                onClick={() => updateFilters({ page: Math.max(filters.page - 1, 1) })}
+                disabled={filters.page === 1}
+                className="px-4 py-2 bg-gray-300 disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span className="px-4 py-2">
+                {filters.page} / {totalPages}
+              </span>
+              <button
+                onClick={() => updateFilters({ page: Math.min(filters.page + 1, totalPages) })}
+                disabled={filters.page >= totalPages}
+                className="px-4 py-2 bg-gray-300 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<LogTable />);
+    </script>
+  </body>
+</html>

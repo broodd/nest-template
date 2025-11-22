@@ -1,13 +1,13 @@
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { Module, DynamicModule, Provider, Global } from '@nestjs/common';
+import { DynamicModule, Provider, Global, Module } from '@nestjs/common';
 
-import { MULTIPART_MODULE_OPTIONS, MULTIPART_MODULE } from './multipart.constants';
-import { StorageService } from './storage.service';
 import {
   MultipartModuleAsyncOptions,
   MultipartOptionsFactory,
   MultipartModuleOptions,
 } from './interfaces';
+import { MULTIPART_MODULE_OPTIONS, MULTIPART_MODULE } from './multipart.constants';
+import { StorageService } from './services/storage.service';
 
 /**
  * [description]

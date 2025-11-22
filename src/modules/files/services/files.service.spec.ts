@@ -1,18 +1,21 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
 import { plainToClassFromExist } from 'class-transformer';
-import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { FastifyReply } from 'fastify';
 
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { TestingModule, Test } from '@nestjs/testing';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { ErrorTypeEnum } from 'src/common/enums';
-import { StorageService } from 'src/multipart';
+
+import { StorageService } from 'src/multipart/services/storage.service';
+import { MultipartBodyFile } from 'src/multipart/interfaces';
 import { DatabaseModule } from 'src/database';
 import { ConfigModule } from 'src/config';
 
-import { PaginationFilesDto, SelectFileDto, SelectFilesDto } from '../dto';
-import { MultipartBodyFile } from 'src/multipart/interfaces';
-import { FilesService } from './files.service';
+import { PaginationFilesDto, SelectFilesDto, SelectFileDto } from '../dto';
 import { FileEntity } from '../entities';
+
+import { FilesService } from './files.service';
 
 describe('FilesService', () => {
   const expected = {

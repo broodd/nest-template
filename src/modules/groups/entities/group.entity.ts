@@ -1,8 +1,10 @@
-import { Column, Entity, ManyToOne, JoinColumn, JoinTable, OneToMany } from 'typeorm';
+import { JoinColumn, ManyToOne, JoinTable, OneToMany, Column, Entity } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
-import { VirtualColumn } from 'src/database/decorators';
 import { CommonEntity } from 'src/common/entities';
+
+import { VirtualColumn } from 'src/database/decorators';
 
 import { PostEntity } from 'src/modules/posts/entities';
 import { FileEntity } from 'src/modules/files/entities';

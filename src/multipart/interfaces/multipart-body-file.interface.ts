@@ -14,4 +14,9 @@ export interface MultipartBodyFile
    * [decription]
    */
   key?: string;
+
+  /**
+   * [decription]
+   */
+  limit?: boolean;
 }

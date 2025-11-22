@@ -1,33 +1,38 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { FindOneOptions, FindOptionsWhere } from 'typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { ConfigService } from 'src/config';
-import { JwtService } from '@nestjs/jwt';
+import { FindOptionsWhere, FindOneOptions } from 'typeorm';
+import { Transactional } from 'typeorm-transactional';
+import { plainToInstance } from 'class-transformer';
 import { Cache } from 'cache-manager';
-import { randomBytes } from 'crypto';
 
+import { BadRequestException, HttpException, Injectable, Inject, Type } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { JwtService } from '@nestjs/jwt';
+
+import { generateCode, compare } from 'src/common/helpers';
 import { ErrorTypeEnum } from 'src/common/enums';
-import { SendMailService } from 'src/sendmail';
-import { compare } from 'src/common/helpers';
+
+import { SendMailService } from 'src/sendmail/services';
+import { MailType } from 'src/sendmail/types';
+import { ConfigService } from 'src/config';
 
 import { UserRefreshTokensService, UsersService } from '../../users/services';
-import { UserEntity, UserRefreshTokenEntity } from '../../users/entities';
+import { UserRefreshTokenEntity, UserEntity } from '../../users/entities';
+import { UserStatusEnum } from 'src/modules/users/enums';
 
-import { TemplateNameEnum, TemplateSubjectEnum } from 'src/sendmail/enums';
-import { TemplatedMailResetPasswordType } from 'src/sendmail/types';
-import { CACHE_AUTH_PREFIX } from '../auth.constants';
-import { UserStatusEnum } from '../../users/enums';
 import {
-  UpdatePasswordByCreateConfirmationDto,
+  CreateProfileConfirmationDto,
   JwtRefreshTokenPayloadDto,
   JwtAccessTokenPayloadDto,
-  SendResetPasswordDto,
+  ResponseCredentialsDto,
   ConfirmationEmailDto,
+  SendResetPasswordDto,
+  UpdatePasswordDto,
   CreateProfileDto,
   ResetPasswordDto,
   CredentialsDto,
+  ReqAuthUserDto,
   JwtTokensDto,
 } from '../dto';
+import { CACHE_AUTH_PREFIX } from '../auth.constants';
 
 /**
  * [description]
@@ -40,14 +45,6 @@ export class AuthService {
   private readonly secretAccessToken;
   private readonly cacheAuthTtl: number;
 
-  /**
-   * [description]
-   * @param userRefreshTokensService
-   * @param sendMailService
-   * @param configService
-   * @param usersService
-   * @param jwtService
-   */
   constructor(
     private readonly userRefreshTokensService: UserRefreshTokensService,
     private readonly sendMailService: SendMailService,
@@ -65,12 +62,22 @@ export class AuthService {
   }
 
   /**
+   * Generate error in format
+   * @param ErrorRef
+   * @param errorType
+   * @param error
+   */
+  public throwError(ErrorRef: Type<HttpException>, errorType: ErrorTypeEnum, error?: Error): never {
+    throw new ErrorRef({ message: errorType, error });
+  }
+
+  /**
    * [description]
    * @param id
    * @param userRefreshToken
    */
   public generateAccessToken(
-    { id }: UserEntity,
+    { id }: Partial<UserEntity>,
     { id: refreshTokenId }: UserRefreshTokenEntity,
   ): string {
     const payload: JwtAccessTokenPayloadDto = { id, refreshTokenId };
@@ -86,7 +93,7 @@ export class AuthService {
    * @param userRefreshToken
    */
   public generateRefreshToken(
-    { id }: UserEntity,
+    { id }: Partial<UserEntity>,
     { id: refreshTokenId, ppid }: UserRefreshTokenEntity,
   ): string {
     const payload: JwtRefreshTokenPayloadDto = { id, refreshTokenId, ppid };
@@ -101,7 +108,10 @@ export class AuthService {
    * @param user
    * @param userRefreshToken
    */
-  public generateTokens(user: UserEntity, userRefreshToken: UserRefreshTokenEntity): JwtTokensDto {
+  public generateTokens(
+    user: Partial<UserEntity>,
+    userRefreshToken: UserRefreshTokenEntity,
+  ): JwtTokensDto {
     const token = this.generateAccessToken(user, userRefreshToken);
     const refreshToken = this.generateRefreshToken(user, userRefreshToken);
     return { token, refreshToken };
@@ -109,41 +119,64 @@ export class AuthService {
 
   /**
    * [description]
-   * @param digits
-   * @param size
-   */
-  public generateCode(digits = 6, size = 20): string {
-    const buffer = randomBytes(size);
-    const value = buffer.readUInt32BE(0x0f) % 10 ** digits;
-    return value.toString().padStart(digits, '0');
-  }
-
-  /**
-   * [description]
    * @param email
    * @param password
    */
-  public async createToken({ email, password }: CredentialsDto): Promise<JwtTokensDto> {
-    const user = await this.validateUser({ email });
-    if (!(await this.validatePassword(password, user.password)))
+  @Transactional()
+  public async createToken(data: CredentialsDto): Promise<ResponseCredentialsDto> {
+    const user = await this.validateUser({ email: data.email, status: UserStatusEnum.ACTIVATED });
+
+    if (!(await this.validatePassword(data.password, user.password)))
       throw new BadRequestException(ErrorTypeEnum.AUTH_INCORRECT_CREDENTIALS);
+
     const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
       owner: { id: user.id },
     });
+
     await this.userRefreshTokensService.deleteOldRefreshTokens({ ownerId: user.id });
-    return this.generateTokens(user, refreshToken);
+    const tokens = await this.generateTokens(user, refreshToken);
+
+    return plainToInstance(ResponseCredentialsDto, { tokens, user });
   }
 
   /**
    * [description]
    * @param data
    */
-  public async createUser(data: CreateProfileDto): Promise<JwtTokensDto> {
-    const user = await this.usersService.createOne(data);
-    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
-      owner: { id: user.id },
+  public async createUser(data: CreateProfileDto): Promise<Partial<MailType>> {
+    const user = await this.usersService.createOne(data).catch(() => {
+      return this.usersService
+        .selectOne({ email: data.email, status: UserStatusEnum.PENDING })
+        .catch(() => this.throwError(BadRequestException, ErrorTypeEnum.ALREADY_EXIST_ERROR));
     });
-    return this.generateTokens(user, refreshToken);
+
+    const code = generateCode();
+    await this.cacheManager.set(`${CACHE_AUTH_PREFIX}${user.id}`, code, this.cacheAuthTtl);
+
+    const context = this.sendMailService.templateCtx.build_SING_UP_CODE(user, { code });
+    return this.sendMailService.sendTemplatedMail(context);
+  }
+
+  /**
+   * [description]
+   * @param data
+   */
+  @Transactional()
+  public async createUserAndConfirmationBySecurityCode(
+    data: CreateProfileConfirmationDto,
+  ): Promise<ResponseCredentialsDto> {
+    const { id } = await this.validateEmailCode(data);
+    const user = await this.usersService.updateOne({ id }, data);
+    await this.cacheManager.del(`${CACHE_AUTH_PREFIX}${user.id}`);
+
+    const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
+      owner: { id },
+    });
+
+    await this.userRefreshTokensService.deleteOldRefreshTokens({ ownerId: id });
+    const tokens = await this.generateTokens(user, refreshToken);
+
+    return plainToInstance(ResponseCredentialsDto, { tokens, user });
   }
 
   /**
@@ -154,16 +187,21 @@ export class AuthService {
   public async validateUser(
     conditions: FindOptionsWhere<UserEntity>,
     options?: FindOneOptions<UserEntity>,
-  ): Promise<UserEntity> {
+  ): Promise<ReqAuthUserDto> {
     const initialOptions: FindOneOptions<UserEntity> = {
-      select: { id: true, password: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+      },
       loadEagerRelations: false,
     };
     return this.usersService
       .selectOne(conditions, Object.assign(initialOptions, options))
-      .catch(() => {
-        throw new BadRequestException(ErrorTypeEnum.AUTH_INCORRECT_CREDENTIALS);
-      });
+      .catch((error) =>
+        this.throwError(BadRequestException, ErrorTypeEnum.AUTH_INCORRECT_CREDENTIALS, error),
+      );
   }
 
   /**
@@ -183,14 +221,15 @@ export class AuthService {
    */
   public async validateEmailCode(data: ConfirmationEmailDto): Promise<Partial<UserEntity>> {
     const { code, email } = data;
-    const user = await this.usersService.selectOne(
-      { email },
-      { loadEagerRelations: false, select: { id: true, password: true } },
-    );
+    const user = await this.usersService
+      .selectOne({ email }, { loadEagerRelations: false, select: { id: true, password: true } })
+      .catch(() =>
+        this.throwError(BadRequestException, ErrorTypeEnum.AUTH_INCORRECT_CONFIRMATION_EMAIL_CODE),
+      );
 
     const cacheCode = await this.cacheManager.get<string>(`${CACHE_AUTH_PREFIX}${user.id}`);
     if (cacheCode !== code)
-      throw new BadRequestException(ErrorTypeEnum.AUTH_INCORRECT_CONFIRMATION_EMAIL_CODE);
+      this.throwError(BadRequestException, ErrorTypeEnum.AUTH_INCORRECT_CONFIRMATION_EMAIL_CODE);
 
     return user;
   }
@@ -199,35 +238,32 @@ export class AuthService {
    * [description]
    * @param data
    */
-  public async sendResetPassword(data: SendResetPasswordDto): Promise<void> {
-    const { id } = await this.usersService.selectOne(data, {
-      loadEagerRelations: false,
-      select: { id: true },
-    });
+  public async sendEmailResetPassword(data: SendResetPasswordDto): Promise<void> {
+    const user = await this.usersService.selectOne(
+      { ...data, status: UserStatusEnum.ACTIVATED },
+      { loadEagerRelations: false },
+    );
 
-    const code = this.generateCode();
-    await this.cacheManager.set(`${CACHE_AUTH_PREFIX}${id}`, code, this.cacheAuthTtl);
+    const code = generateCode();
+    await this.cacheManager.set(`${CACHE_AUTH_PREFIX}${user.id}`, code, this.cacheAuthTtl);
 
-    await this.sendMailService.sendTemplatedEmail<TemplatedMailResetPasswordType>({
-      to: [data.email],
-      subject: TemplateSubjectEnum.RESET_PASSWORD,
-      template: TemplateNameEnum.RESET_PASSWORD,
-      context: { code, url: '' },
-    });
+    const context = await this.sendMailService.templateCtx.build_RESET_PASSWORD(user, { code });
+    await this.sendMailService.sendTemplatedMail(context);
   }
 
   /**
    * [description]
    * @param data
    */
-  public async resetPassword(data: ResetPasswordDto): Promise<void> {
+  @Transactional()
+  public async resetPassword(data: ResetPasswordDto): Promise<UserEntity> {
     const { id, password } = await this.validateEmailCode(data);
 
     if (await this.validatePassword(data.password, password))
       throw new BadRequestException(ErrorTypeEnum.NEW_PASSWORD_AND_OLD_PASSWORD_CANNOT_BE_SAME);
 
     await this.cacheManager.del(`${CACHE_AUTH_PREFIX}${id}`);
-    await this.usersService.updateOne({ id }, { password: data.password });
+    return this.usersService.updateOne({ id }, { password: data.password });
   }
 
   /**
@@ -235,15 +271,12 @@ export class AuthService {
    * @param data
    * @param user
    */
-  public async updatePasswordByCreateCreateConfirmation(
-    data: UpdatePasswordByCreateConfirmationDto,
+  public async updatePassword(
+    data: UpdatePasswordDto,
+    user: Partial<UserEntity>,
   ): Promise<UserEntity> {
-    const user = await this.validateUser({ email: data.email });
-    if (!(await this.validatePassword(data.temporaryPassword, user.password)))
+    if (!(await this.validatePassword(data.oldPassword, user.password)))
       throw new BadRequestException(ErrorTypeEnum.AUTH_PASSWORDS_DO_NOT_MATCH);
-    return this.usersService.updateOne(
-      { id: user.id },
-      { password: data.password, status: UserStatusEnum.ACTIVATED },
-    );
+    return this.usersService.updateOne({ id: user.id }, { password: data.password });
   }
 }

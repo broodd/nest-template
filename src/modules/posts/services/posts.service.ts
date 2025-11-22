@@ -1,5 +1,6 @@
 import { SelectQueryBuilder, Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
@@ -8,8 +9,8 @@ import { ErrorTypeEnum } from 'src/common/enums';
 
 import { RelationshipEntity } from 'src/modules/relationships/entities';
 
-import { PostCommentEntity, PostEntity, PostLikeEntity } from '../entities';
-import { CreateLocationDto, PaginationPostsDto } from '../dto';
+import { PostCommentEntity, PostLikeEntity, PostEntity } from '../entities';
+import { PaginationPostsDto, CreateLocationDto } from '../dto';
 
 /**
  * [description]
@@ -29,16 +30,16 @@ export class PostsService extends CommonService<PostEntity, PaginationPostsDto> 
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
   public find(
-    optionsOrConditions: FindManyBracketsOptions<PostEntity> & {
+    options: FindManyBracketsOptions<PostEntity> & {
       coordinates?: CreateLocationDto['coordinates'];
       maxDistance?: number;
     } = {},
   ): SelectQueryBuilder<PostEntity> {
-    const qb = super.find(optionsOrConditions);
-    const { coordinates, maxDistance } = optionsOrConditions;
+    const qb = super.find(options);
+    const { coordinates, maxDistance } = options;
 
     if (coordinates) {
       qb.andWhere('PostEntity.location IS NOT NULL');
@@ -55,7 +56,7 @@ export class PostsService extends CommonService<PostEntity, PaginationPostsDto> 
       ).addOrderBy('distance', 'ASC');
     }
 
-    if (optionsOrConditions.loadEagerRelations !== false) {
+    if (options.loadEagerRelations !== false) {
       qb.leftJoinAndSelect('PostEntity.images', 'images');
       qb.leftJoinAndSelect('PostEntity.owner', 'owner');
       qb.leftJoinAndSelect('owner.cover', 'owner_cover');
@@ -74,7 +75,7 @@ export class PostsService extends CommonService<PostEntity, PaginationPostsDto> 
           .andWhere('PostCommentEntity.postId = PostEntity.id');
       }, '__comments_count');
 
-      const userId = optionsOrConditions.userId;
+      const userId = options._userId;
       if (userId)
         qb.addSelect((sub) => {
           return sub
@@ -95,7 +96,7 @@ export class PostsService extends CommonService<PostEntity, PaginationPostsDto> 
   public async selectManyAndCountByFollowings(
     options: FindManyBracketsOptions<PostEntity> = { loadEagerRelations: false },
   ): Promise<PaginationPostsDto> {
-    const userId = options.userId;
+    const userId = options._userId;
     const qb = this.find(options);
     if (options.whereBrackets) qb.andWhere(options.whereBrackets);
 

@@ -1,7 +1,8 @@
-import { IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, MaxLength, MinLength, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Brackets } from 'typeorm';
+
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 import { querySearch } from 'src/common/helpers';

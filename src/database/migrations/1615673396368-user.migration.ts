@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-import { UserRoleEnum, UserStatusEnum } from 'src/modules/users/enums';
+import { UserStatusEnum, UserRoleEnum } from 'src/modules/users/enums';
 import { UserEntity } from 'src/modules/users/entities';
 
 // Password1

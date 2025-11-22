@@ -2,8 +2,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 
 import { UserNotificationTokensService, UserRefreshTokensService, UsersService } from './services';
-import { UserEntity, UserNotificationTokenEntity, UserRefreshTokenEntity } from './entities';
-import { UsersController, UserNotificationTokensController } from './controllers';
+import { UserNotificationTokenEntity, UserRefreshTokenEntity, UserEntity } from './entities';
+import { UserNotificationTokensController, UsersController } from './controllers';
 
 /**
  * [description]

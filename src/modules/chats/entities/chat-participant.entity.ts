@@ -1,9 +1,11 @@
 import { JoinColumn, ManyToOne, Column, Entity, Index } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CommonEntity } from 'src/common/entities';
 
 import { UserEntity } from 'src/modules/users/entities';
+
 import { ChatEntity } from './chat.entity';
 
 /**

@@ -1,13 +1,15 @@
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder, Repository } from 'typeorm';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
-import { PostEntity } from 'src/modules/posts/entities';
 import { CommonService } from 'src/common/services';
 
+import { PostEntity } from 'src/modules/posts/entities';
+
+import { GroupSubscriberEntity, GroupEntity } from '../entities';
 import { PaginationGroupsDto } from '../dto';
-import { GroupEntity, GroupSubscriberEntity } from '../entities';
 
 /**
  * [description]
@@ -47,14 +49,12 @@ export class GroupsService extends CommonService<GroupEntity, PaginationGroupsDt
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
-  public find(
-    optionsOrConditions: FindManyBracketsOptions<GroupEntity> = {},
-  ): SelectQueryBuilder<GroupEntity> {
-    const qb = super.find(optionsOrConditions);
+  public find(options: FindManyBracketsOptions<GroupEntity> = {}): SelectQueryBuilder<GroupEntity> {
+    const qb = super.find(options);
 
-    if (optionsOrConditions.loadEagerRelations !== false) {
+    if (options.loadEagerRelations !== false) {
       qb.addSelect(this.selectLastPostQuery, 'lastPost');
 
       qb.addSelect((sub) => {

@@ -1,7 +1,7 @@
+import { S3ClientConfig } from '@aws-sdk/client-s3';
+
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Type } from '@nestjs/common';
-
-import { S3ClientConfig } from '@aws-sdk/client-s3';
 
 /**
  * [description]

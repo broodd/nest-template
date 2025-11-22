@@ -1,13 +1,15 @@
-import { Process, Processor } from '@nestjs/bull';
 import { FindOptionsWhere } from 'typeorm';
 import { Job } from 'bull';
 
+import { Processor, Process } from '@nestjs/bull';
+
 import { UserNotificationTokenEntity } from 'src/modules/users/entities';
 
-import { NotificationsQueueEventsEnum } from './enums';
 import { NotificationsService } from '../services';
-import { NOTIFICATION_QUEUE } from './constants';
 import { NotificationEntity } from '../entities';
+
+import { NotificationsQueueEventsEnum } from './enums';
+import { NOTIFICATION_QUEUE } from './constants';
 
 /**
  * [description]

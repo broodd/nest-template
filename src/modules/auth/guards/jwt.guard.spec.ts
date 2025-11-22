@@ -1,10 +1,10 @@
-import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import { UserRoleEnum } from 'src/modules/users/enums';
 import { ErrorTypeEnum } from 'src/common/enums';
 
 import { UserEntity } from 'src/modules/users/entities';
+import { UserRoleEnum } from 'src/modules/users/enums';
 
 import { JwtAuthGuard } from './jwt.guard';
 

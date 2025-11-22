@@ -1,7 +1,8 @@
-import { ArrayMaxSize, ArrayMinSize, Equals, IsNumber, IsOptional } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ArrayMaxSize, ArrayMinSize, IsOptional, IsNumber, Equals } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Point } from 'geojson';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * [description]

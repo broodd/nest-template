@@ -1,12 +1,13 @@
 import { SelectQueryBuilder, FindOptionsUtils, Repository, IsNull } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { NotFoundException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { PostCommentEntity, PostCommentLikeEntity } from '../entities';
+import { PostCommentLikeEntity, PostCommentEntity } from '../entities';
 import { PaginationPostCommentsDto } from '../dto/post-comments';
 
 /**
@@ -30,18 +31,15 @@ export class PostCommentsService extends CommonService<
 
   /**
    * [description]
-   * @param optionsOrConditions
+   * @param options
    */
   public find(
-    optionsOrConditions: FindManyBracketsOptions<PostCommentEntity> = {},
+    options: FindManyBracketsOptions<PostCommentEntity> = {},
   ): SelectQueryBuilder<PostCommentEntity> {
-    const qb = super.find(optionsOrConditions);
+    const qb = super.find(options);
 
-    if (
-      !FindOptionsUtils.isFindManyOptions(optionsOrConditions) ||
-      optionsOrConditions.loadEagerRelations !== false
-    ) {
-      const userId = optionsOrConditions.userId;
+    if (!FindOptionsUtils.isFindManyOptions(options) || options.loadEagerRelations !== false) {
+      const userId = options._userId;
 
       qb.leftJoinAndSelect('PostCommentEntity.owner', 'owner');
       qb.leftJoinAndSelect('owner.cover', 'owner_cover');

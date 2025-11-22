@@ -1,14 +1,15 @@
-import { NotFoundException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { instanceToPlain } from 'class-transformer';
 import { Repository } from 'typeorm';
 
+import { NotFoundException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { FindManyBracketsOptions } from 'src/common/interfaces';
 import { CommonService } from 'src/common/services';
 import { ErrorTypeEnum } from 'src/common/enums';
 
 import { PaginationChatParticipantsDto } from '../dto/chat-participants';
-import { ChatEntity, ChatParticipantEntity } from '../entities';
-import { FindManyBracketsOptions } from 'src/common/interfaces';
+import { ChatParticipantEntity, ChatEntity } from '../entities';
 
 /**
  * [description]

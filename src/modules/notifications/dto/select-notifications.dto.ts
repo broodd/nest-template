@@ -1,5 +1,6 @@
-import { ApiHideProperty } from '@nestjs/swagger';
 import { FindOneOptions } from 'typeorm';
+
+import { ApiHideProperty } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 

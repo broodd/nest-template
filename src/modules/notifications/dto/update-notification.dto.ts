@@ -1,4 +1,5 @@
-import { IsDate, IsOptional } from 'class-validator';
+import { IsOptional, IsDate } from 'class-validator';
+
 import { PartialType } from '@nestjs/swagger';
 
 import { CreateNotificationDto } from './create-notification.dto';

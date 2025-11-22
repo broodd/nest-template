@@ -1,5 +1,6 @@
 import { IsOptional, IsUUID } from 'class-validator';
-import { Brackets, FindOneOptions } from 'typeorm';
+import { FindOneOptions, Brackets } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 import { FindManyOptionsDto } from 'src/common/dto';

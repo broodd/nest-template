@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 
-import { UserEntity } from 'src/modules/users/entities';
+import { UserEntity } from '../../users/entities';
 
 /**
  * [description]

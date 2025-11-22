@@ -1,6 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from './config.service';
+import { TestingModule, Test } from '@nestjs/testing';
+
 import { ConfigMode } from './interfaces/config.interface';
+import { ConfigService } from './config.service';
 
 const NODE_ENV = process.env.NODE_ENV;
 const MOCK_ENV = {

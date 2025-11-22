@@ -1,0 +1,98 @@
+<mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="10px 0px 10px 0px">
+  <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+    <mj-text align="left" padding="0px 25px 10px 25px"
+      ><span
+        style="
+          color: var(--Text-Primary-Secondary, #4b5565);
+          font-size: var(--size-body-md, 16px);
+          font-style: normal;
+          font-weight: var(--font-style-weight-regular, 400);
+          line-height: var(--line-height-body-md, 20px); /* 125% */
+          letter-spacing: var(--Letter-Spacing-Primary, 0);
+        "
+        >If you have any questions, feel free to contact us at</span
+      >
+      <a
+        href="{{socials.whatsAppChat}}"
+        style="
+          color: var(--Text-Link-Primary, #3538cd);
+          font-size: var(--size-body-md, 16px);
+          font-style: normal;
+          font-weight: var(--font-style-weight-semibold, 650);
+          line-height: var(--line-height-subtitle-lg, 24px);
+          letter-spacing: var(--Letter-Spacing-Primary, 0);
+          text-decoration-line: underline;
+          text-decoration-style: solid;
+          text-decoration-skip-ink: none;
+          text-decoration-thickness: auto;
+          text-underline-offset: auto;
+          text-underline-position: from-font;
+        "
+        >WhatsApp chat</a
+      ></mj-text
+    >
+  </mj-column>
+</mj-section>
+<mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="10px 25px 0px 25px">
+  <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+    <mj-text align="left" color="#808080" font-size="11px" padding="0px 0px 0px 0px"
+      ><span
+        style="
+          color: var(--Text-Primary-Secondary, #4b5565);
+          font-size: var(--size-body-small-sm, 14px);
+          font-style: normal;
+          font-weight: var(--font-style-weight-regular, 400);
+          line-height: var(--line-height-body-small-sm, 16px); /* 114.286% */
+          letter-spacing: var(--Letter-Spacing-Primary, 0);
+        "
+        >This email was sent to
+        <a
+          style="
+            color: var(--Text-Link-Primary, #3538cd);
+            font-size: var(--size-body-small-sm, 14px);
+            font-style: normal;
+            font-weight: var(--font-style-weight-regular, 400);
+            line-height: var(--line-height-body-small-sm, 16px);
+            letter-spacing: var(--Letter-Spacing-Primary, 0);
+          "
+          tabindex="-1"
+          >{{user.email}}.</a
+        >
+        If you'd rather not receive this kind of email, you can
+        <a
+          style="
+            color: var(--Text-Link-Primary, #3538cd);
+            font-size: var(--size-body-small-sm, 14px);
+            font-style: normal;
+            font-weight: var(--font-style-weight-regular, 400);
+            line-height: var(--line-height-body-small-sm, 16px);
+            letter-spacing: var(--Letter-Spacing-Primary, 0);
+          "
+          tabindex="-1"
+          >unsubscribe</a
+        >
+        or
+        <a
+          style="
+            color: var(--Text-Link-Primary, #3538cd);
+            font-size: var(--size-body-small-sm, 14px);
+            font-style: normal;
+            font-weight: var(--font-style-weight-regular, 400);
+            line-height: var(--line-height-body-small-sm, 16px);
+            letter-spacing: var(--Letter-Spacing-Primary, 0);
+          "
+          tabindex="-1"
+          >manage your email preferences.<br /><br /></a
+        >© 2025y</span
+      ></mj-text
+    >
+  </mj-column>
+</mj-section>
+<mj-section background-repeat="repeat" background-size="auto" background-position="top left" border="none" direction="ltr" text-align="left" padding="20px 25px 20px 25px">
+  <mj-column border="none" vertical-align="top" width="90%" padding="0px 0px 0px 0px">
+    <mj-image align="left" height="auto" src="{{serverURL}}/public/templates/img/logo.png" href="{{clientURL}}" alt="Logo" width="45px" padding="0px 0px 0px 0px"></mj-image>
+  </mj-column>
+  <mj-column border="none" vertical-align="middle" width="9%" padding="0px 0px 0px 0px">
+    <mj-image align="right" height="auto" href="{{socials.instagram}}" src="{{serverURL}}/public/templates/img/instagram-icon.png" alt="Instagram icon" width="20px" padding="0px 0px 0px 0px"></mj-image>
+  </mj-column>
+</mj-section>

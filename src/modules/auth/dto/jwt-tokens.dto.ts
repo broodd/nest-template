@@ -35,6 +35,11 @@ export class JwtAccessTokenPayloadDto {
    * [description]
    */
   public readonly refreshTokenId: string;
+
+  /**
+   * [description]
+   */
+  public readonly isDev?: boolean;
 }
 
 /**

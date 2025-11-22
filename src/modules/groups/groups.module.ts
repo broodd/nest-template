@@ -1,9 +1,9 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 
-import { GroupsController, GroupSubscribersController } from './controllers';
-import { GroupsService, GroupSubscribersService } from './services';
-import { GroupEntity, GroupSubscriberEntity } from './entities';
+import { GroupSubscribersController, GroupsController } from './controllers';
+import { GroupSubscribersService, GroupsService } from './services';
+import { GroupSubscriberEntity, GroupEntity } from './entities';
 
 /**
  * [description]

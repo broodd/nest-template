@@ -1,4 +1,3 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   ClassSerializerInterceptor,
   ConflictException,
@@ -9,9 +8,10 @@ import {
   Param,
   Query,
   Post,
-  Get,
   Body,
+  Get,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ErrorTypeEnum } from 'src/common/enums';
 import { User } from 'src/common/decorators';
@@ -21,7 +21,7 @@ import { ChatsService } from 'src/modules/chats/services';
 import { UserEntity } from 'src/modules/users/entities';
 import { JwtAuthGuard } from 'src/modules/auth/guards';
 
-import { CreateRelationshipDto, PaginationRelationshipsDto, SelectRelationshipsDto } from '../dto';
+import { PaginationRelationshipsDto, SelectRelationshipsDto, CreateRelationshipDto } from '../dto';
 import { RelationshipsService } from '../services';
 import { RelationshipEntity } from '../entities';
 

@@ -1,14 +1,16 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { Test, TestingModule } from '@nestjs/testing';
+
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { TestingModule, Test } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ErrorTypeEnum } from 'src/common/enums';
+
 import { DatabaseModule } from 'src/database';
 import { ConfigModule } from 'src/config';
 
-import { SelectUsersDto } from '../dto';
 import { UserRefreshTokenEntity } from '../entities';
+import { SelectUsersDto } from '../dto';
 
 import { UserRefreshTokensService } from './user-refresh-tokens.service';
 

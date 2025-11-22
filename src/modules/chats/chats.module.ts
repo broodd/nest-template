@@ -4,16 +4,17 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { ConfigService } from 'src/config';
 
-import { ChatEntity, ChatMessageEntity, ChatParticipantEntity } from './entities';
-import { ChatMessagesController, ChatsController } from './controllers';
 import { SocketsModule } from '../sockets';
 import { UsersModule } from '../users';
+
 import {
   ChatParticipantsService,
   ChatMessagesService,
   ChatsGateway,
   ChatsService,
 } from './services';
+import { ChatParticipantEntity, ChatMessageEntity, ChatEntity } from './entities';
+import { ChatMessagesController, ChatsController } from './controllers';
 
 @Module({
   imports: [

@@ -1,13 +1,22 @@
 {
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
+  "entryFile": "main",
   "compilerOptions": {
     "plugins": ["@nestjs/swagger/plugin"],
     "assets": [
       {
         "include": "sendmail/templates/*",
-        "outDir": "dist/src",
+        "outDir": "dist",
         "watchAssets": true
+      },
+      {
+        "include": "sendmail/templates/mjml/*",
+        "outDir": "dist",
+        "watchAssets": true
+      },
+      {
+        "include": "**/*.json"
       }
     ]
   }

@@ -1,6 +1,7 @@
-import { ArgumentsHost, Catch, HttpException, WsExceptionFilter } from '@nestjs/common';
-import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
+
+import { WsExceptionFilter, ArgumentsHost, HttpException, Catch } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 import { ErrorTypeEnum } from '../enums';
 

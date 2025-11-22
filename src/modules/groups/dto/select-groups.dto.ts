@@ -1,6 +1,7 @@
 import { IsOptional, MaxLength, MinLength } from 'class-validator';
+import { FindOneOptions, Brackets } from 'typeorm';
+
 import { ApiProperty } from '@nestjs/swagger';
-import { Brackets, FindOneOptions } from 'typeorm';
 
 import { FindManyOptionsDto } from 'src/common/dto';
 

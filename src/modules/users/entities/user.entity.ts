@@ -1,28 +1,31 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { hash } from 'src/common/helpers';
 import {
   BeforeInsert,
   BeforeUpdate,
   JoinColumn,
-  OneToMany,
   ManyToOne,
+  OneToMany,
   Column,
   Entity,
 } from 'typeorm';
+import { Transform } from 'class-transformer';
+
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+
+import { CommonEntity } from 'src/common/entities';
+import { hash } from 'src/common/helpers';
 
 import { VirtualColumn } from 'src/database/decorators';
-import { CommonEntity } from 'src/common/entities';
 
 import { NotificationEntity } from 'src/modules/notifications/entities';
 import { RelationshipEntity } from 'src/modules/relationships/entities';
-import { PostEntity, StoryEntity } from 'src/modules/posts/entities';
+import { StoryEntity, PostEntity } from 'src/modules/posts/entities';
 import { GroupSubscriberEntity } from 'src/modules/groups/entities';
 import { FileEntity } from 'src/modules/files/entities';
 
+import { UserStatusEnum, UserRoleEnum } from '../enums';
+
 import { UserNotificationTokenEntity } from './user-notification-token.entity';
 import { UserRefreshTokenEntity } from './user-refresh-token.entity';
-import { UserRoleEnum, UserStatusEnum } from '../enums';
 
 /**
  * [description]
@@ -42,6 +45,13 @@ export class UserEntity extends CommonEntity {
   @ApiProperty({ enum: UserRoleEnum, default: UserRoleEnum.ADMIN })
   @Column({ type: 'enum', enum: UserRoleEnum, default: UserRoleEnum.ADMIN })
   public readonly role: UserRoleEnum;
+
+  /**
+   * [description]
+   */
+  @ApiProperty({ maxLength: 64 })
+  @Column({ type: 'varchar', length: 64, default: 'Europe/London' })
+  public readonly timezone: string;
 
   /**
    * [description]

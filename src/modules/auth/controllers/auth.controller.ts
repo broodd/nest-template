@@ -1,34 +1,44 @@
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { FastifyReply } from 'fastify';
+
 import {
   ClassSerializerInterceptor,
   UseInterceptors,
   Controller,
   UseGuards,
-  Query,
   Patch,
-  Post,
+  Query,
   Body,
+  Post,
   Get,
+  Res,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/common/decorators';
 
-import { UserRefreshTokensService, UsersService } from 'src/modules/users/services';
-import { UserEntity } from 'src/modules/users/entities';
+import { ConfigService, ConfigMode } from 'src/config';
+import { MailType } from 'src/sendmail/types';
 
-import { JwtRefreshGuard, JwtAuthGuard } from '../guards';
-import { AuthService } from '../services';
+import { UserRefreshTokensService, UsersService } from '../../users/services';
+import { UserStatusEnum } from 'src/modules/users/enums';
+import { UserEntity } from '../../users/entities';
+
 import {
-  UpdatePasswordByCreateConfirmationDto,
-  SendResetPasswordDto,
+  CreateProfileConfirmationDto,
+  ResponseCredentialsDto,
   ConfirmationEmailDto,
-  JwtRefreshTokenDto,
-  SelectProfileDto,
+  SendResetPasswordDto,
+  UpdatePasswordDto,
+  CreateProfileDto,
   ResetPasswordDto,
+  SelectProfileDto,
   UpdateProfileDto,
   CredentialsDto,
   JwtTokensDto,
 } from '../dto';
+import { ReqAuthUserDto } from '../dto/req-auth-user.dto';
+import { JwtRefreshGuard, JwtAuthGuard } from '../guards';
+import { AuthService } from '../services';
 
 /**
  * [description]
@@ -39,23 +49,49 @@ import {
 export class AuthController {
   /**
    * [description]
-   * @param userRefreshTokensService
    * @param usersService
    * @param authService
    */
   constructor(
     private readonly userRefreshTokensService: UserRefreshTokensService,
+    private readonly configService: ConfigService,
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
   ) {}
 
   /**
    * [description]
+   * @param reply
+   * @param tokens
+   */
+  public setCookieTokens(reply: FastifyReply, tokens: JwtTokensDto): void {
+    reply.setCookie('accessToken', tokens.token, {
+      secure: this.configService.getMode(ConfigMode.production),
+      sameSite: 'strict',
+      httpOnly: true,
+      path: '/',
+    });
+    reply.setCookie('refreshToken', tokens.refreshToken, {
+      secure: this.configService.getMode(ConfigMode.production),
+      sameSite: 'strict',
+      httpOnly: true,
+      path: '/',
+    });
+  }
+
+  /**
+   * [description]
    * @param data
    */
   @Post('signin')
-  public async createToken(@Body() data: CredentialsDto): Promise<JwtTokensDto> {
-    return this.authService.createToken(data);
+  public async createToken(
+    @Body() data: CredentialsDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<ResponseCredentialsDto> {
+    const response = await this.authService.createToken(data);
+
+    this.setCookieTokens(reply, response.tokens);
+    return response;
   }
 
   /**
@@ -63,10 +99,20 @@ export class AuthController {
    * @param data
    */
   @Post('signup')
-  public async updatePasswordByCreateConfirmation(
-    @Body() data: UpdatePasswordByCreateConfirmationDto,
-  ): Promise<UserEntity> {
-    return this.authService.updatePasswordByCreateCreateConfirmation(data);
+  public async createUser(@Body() data: CreateProfileDto): Promise<Partial<MailType>> {
+    return this.authService.createUser(data);
+  }
+
+  /**
+   * [description]
+   * @param data
+   */
+  @Post('signup/confirmation')
+  public async signUpConfirmation(
+    @Body() data: CreateProfileConfirmationDto,
+  ): Promise<ResponseCredentialsDto> {
+    data.status = UserStatusEnum.ACTIVATED;
+    return this.authService.createUserAndConfirmationBySecurityCode(data);
   }
 
   /**
@@ -75,10 +121,16 @@ export class AuthController {
    */
   @Post('log-out')
   @UseGuards(JwtRefreshGuard)
-  @ApiBody({ type: JwtRefreshTokenDto })
-  public async logOut(@User() user: UserEntity): Promise<void> {
+  @ApiCookieAuth('refreshToken')
+  public async logOut(
+    @User() user: ReqAuthUserDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<void> {
+    reply.clearCookie('accessToken');
+    reply.clearCookie('refreshToken');
+
     const [refreshToken] = user.refreshTokens;
-    await this.userRefreshTokensService.deleteOne({ id: refreshToken.id, owner: { id: user.id } });
+    await this.userRefreshTokensService.deleteOne({ id: refreshToken.id, ownerId: user.id });
   }
 
   /**
@@ -87,14 +139,20 @@ export class AuthController {
    */
   @Post('refresh-tokens')
   @UseGuards(JwtRefreshGuard)
-  @ApiBody({ type: JwtRefreshTokenDto })
-  public async refreshTokens(@User() user: UserEntity): Promise<JwtTokensDto> {
+  @ApiCookieAuth('refreshToken')
+  public async refreshTokens(
+    @User() user: ReqAuthUserDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<JwtTokensDto> {
     const [oldRefreshToken] = user.refreshTokens;
     const refreshToken = await this.userRefreshTokensService.generateAndCreateOne({
       id: oldRefreshToken.id,
       owner: { id: user.id },
     });
-    return this.authService.generateTokens(user, refreshToken);
+    const tokens = await this.authService.generateTokens(user, refreshToken);
+
+    this.setCookieTokens(reply, tokens);
+    return tokens;
   }
 
   /**
@@ -102,8 +160,9 @@ export class AuthController {
    * @param data
    */
   @Post('reset-password/send/email')
+  @ApiOperation({ summary: 'Send email with temporary code for reset password' })
   public async sendResetPassword(@Body() data: SendResetPasswordDto): Promise<void> {
-    return this.authService.sendResetPassword(data);
+    return this.authService.sendEmailResetPassword(data);
   }
 
   /**
@@ -111,7 +170,8 @@ export class AuthController {
    * @param data
    */
   @Post('reset-password')
-  public async resetPassword(@Body() data: ResetPasswordDto): Promise<void> {
+  @ApiOperation({ summary: 'Set new password by temporary reset-password code' })
+  public async resetPassword(@Body() data: ResetPasswordDto): Promise<UserEntity> {
     return this.authService.resetPassword(data);
   }
 
@@ -120,7 +180,10 @@ export class AuthController {
    * @param data
    */
   @Post('validate/email/code')
-  public async confirmationEmail(@Body() data: ConfirmationEmailDto): Promise<void> {
+  @ApiOperation({
+    summary: 'Validate code from email (signup, reset password). Request only for validation',
+  })
+  public async validateEmailCode(@Body() data: ConfirmationEmailDto): Promise<void> {
     await this.authService.validateEmailCode(data);
   }
 
@@ -130,8 +193,8 @@ export class AuthController {
    * @param options
    */
   @Get('profile')
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth('accessToken')
   public async selectUser(
     @User() { id }: UserEntity,
     @Query() options: SelectProfileDto,
@@ -145,12 +208,26 @@ export class AuthController {
    * @param data
    */
   @Patch('profile')
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth('accessToken')
   public async updateUser(
     @Body() data: UpdateProfileDto,
-    @User() user: UserEntity,
+    @User() user: ReqAuthUserDto,
   ): Promise<UserEntity> {
     return this.usersService.updateOne({ id: user.id }, data);
+  }
+
+  /**
+   * [description]
+   * @param data
+   */
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile/password')
+  @ApiCookieAuth('accessToken')
+  public async updatePassword(
+    @Body() data: UpdatePasswordDto,
+    @User() user: ReqAuthUserDto,
+  ): Promise<UserEntity> {
+    return this.authService.updatePassword(data, user);
   }
 }

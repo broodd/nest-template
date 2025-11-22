@@ -1,10 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule, Test } from '@nestjs/testing';
 import { TerminusModule } from '@nestjs/terminus';
 
+import { AppController } from './app.controller';
 import { DatabaseModule } from './database';
 import { ConfigModule } from './config';
-
-import { AppController } from './app.controller';
 
 describe('AppController', () => {
   let controller: AppController;

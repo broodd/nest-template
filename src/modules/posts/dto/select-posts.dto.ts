@@ -1,6 +1,3 @@
-import { Brackets, FindOneOptions, ILike } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -11,6 +8,10 @@ import {
   IsUUID,
   Max,
 } from 'class-validator';
+import { FindOneOptions, Brackets, ILike } from 'typeorm';
+import { Transform } from 'class-transformer';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 import { toNumArrayByComa } from 'src/common/helpers';
 import { FindManyOptionsDto } from 'src/common/dto';

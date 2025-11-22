@@ -1,4 +1,5 @@
 import { SelectQueryBuilder, Repository } from 'typeorm';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -29,14 +30,14 @@ export class ChatMessagesService extends CommonService<
 
   /**
    *  [description]
-   * @param optionsOrConditions
+   * @param options
    */
   public find(
-    optionsOrConditions?: FindManyBracketsOptions<ChatMessageEntity>,
+    options?: FindManyBracketsOptions<ChatMessageEntity>,
   ): SelectQueryBuilder<ChatMessageEntity> {
-    const qb = super.find(optionsOrConditions);
+    const qb = super.find(options);
 
-    if (optionsOrConditions.loadEagerRelations !== false) {
+    if (options.loadEagerRelations !== false) {
       qb.leftJoinAndSelect('ChatMessageEntity.story', 'story');
       qb.leftJoinAndSelect('story.image', 'story_image');
       qb.leftJoinAndSelect('ChatMessageEntity.file', 'file');

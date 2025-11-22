@@ -1,0 +1,94 @@
+<mjml>
+  <!-- HEAD ATTRIBUTES -->
+  <mj-include path="./partials/head-attributes.mjml" />
+
+  <mj-body background-color="#FFFFFF" width="640px">
+    <mj-wrapper padding="0px 0px 0px 0px" border="none" direction="ltr" text-align="center" border-radius="var(--Border-radius-border_radius_S, 8px)" background-color="#FFF">
+      <!-- HEADER -->
+      <mj-include path="./partials/header.mjml" />
+
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="10px 0px 0px 0px">
+        <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+          <mj-text align="left" font-size="22px" font-weight="bold" padding="10px 25px 10px 25px"><span>{{title}}</span></mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="10px 0px 0px 0px">
+        <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+          <mj-text align="left" padding="1px 25px 10px 25px">
+            <span
+              >Shalom <mj-raw>{{#if name}} <b>{{name}},</b>{{/if}}</mj-raw></span
+            >
+          </mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="1px 0px 1px 0px">
+        <mj-column border="none" vertical-align="top" width="100%" padding="0px 0px 0px 0px">
+          <mj-text align="left" line-height="20px" padding="0px 25px 0px 25px"><span style="line-height: var(--line-height-body-md, 20px)"><mj-raw>{{{parse text}}}</mj-raw></span> </mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="left" padding="0px 0px 0px 0px">
+        <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+          <mj-text align="left" padding="0px 25px 10px 25px"
+            >
+            </br>
+            <span
+              style="
+                color: var(--Text-Primary-Secondary, #4b5565);
+                font-size: var(--size-body-md, 16px);
+                font-style: normal;
+                font-weight: var(--font-style-weight-regular, 400);
+                line-height: var(--line-height-body-md, 20px); /* 125% */
+                letter-spacing: var(--Letter-Spacing-Primary, 0);
+              "
+              >If you need anything else, feel free to reach out.</span
+            ><br /><span
+              style="
+                color: var(--Text-Primary-Primary, #121926);
+                font-size: var(--size-body-md, 16px);
+                font-style: normal;
+                font-weight: var(--font-style-weight-medium, 500);
+                line-height: var(--line-height-body-md, 20px);
+                letter-spacing: var(--Letter-Spacing-Primary, 0);
+              "
+            >
+              <b>Team</b></span
+            ></mj-text
+          >
+        </mj-column>
+      </mj-section>
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="1px 0px 1px 0px">
+        <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+          <mj-divider align="center" border-width="1px" border-style="solid" border-color="#cccccc" padding="10px 0px 10px 0px"></mj-divider>
+        </mj-column>
+      </mj-section>
+
+      <mj-raw> {{#if buttonText}} </mj-raw>
+      <mj-section background-repeat="repeat" background-size="auto" background-position="top center" border="none" direction="ltr" text-align="center" padding="0px 0px 0px 0px">
+        <mj-column border="none" vertical-align="top" padding="0px 0px 0px 0px">
+          <mj-button
+            align="left"
+            background-color="#3538CD"
+            color="#FFFFFF"
+            font-weight="600"
+            border-radius="9999px"
+            line-height="20px"
+            target="_blank"
+            vertical-align="middle"
+            border="1px solid #E3E8EF"
+            text-align="center"
+            href="{{clientURL}}{{buttonUrl}}"
+            font-style="normal"
+            font-size="14px"
+            padding="20px 25px 10px 25px"
+            inner-padding="10px 25px 10px 25px"
+            >{{buttonText}}</mj-button
+          >
+        </mj-column>
+      </mj-section>
+      <mj-raw> {{/if}} </mj-raw>
+
+      <!-- FOOTER -->
+      <mj-include path="./partials/footer.mjml" />
+    </mj-wrapper>
+  </mj-body>
+</mjml>
